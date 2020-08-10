@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29911.84
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnicornShopLegacy", "src\UnicornShopLegacy.csproj", "{D6BCE0B8-BFEE-42E4-9192-FB746C3AB4C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnicornShopLegacy.Tests", "test\UnicornShopLegacy.Tests.csproj", "{965EF1F3-F9CA-49B2-A0ED-9757498462DF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6BCE0B8-BFEE-42E4-9192-FB746C3AB4C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6BCE0B8-BFEE-42E4-9192-FB746C3AB4C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6BCE0B8-BFEE-42E4-9192-FB746C3AB4C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6BCE0B8-BFEE-42E4-9192-FB746C3AB4C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{965EF1F3-F9CA-49B2-A0ED-9757498462DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{965EF1F3-F9CA-49B2-A0ED-9757498462DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{965EF1F3-F9CA-49B2-A0ED-9757498462DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{965EF1F3-F9CA-49B2-A0ED-9757498462DF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {66036B98-104D-4732-842D-CCF0A49CA9E9}
+	EndGlobalSection
+EndGlobal
