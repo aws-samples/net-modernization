@@ -1,0 +1,24 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - "echo Logging in to Amazon ECR..."
+      - "$(aws ecr get-login --region $MAIN_REGION --no-include-email)"
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$MAIN_REGION.amazonaws.com/$INVENTORY_ECR_NAME
+      - IMAGE_TAG=latest
+      - echo Writing image definitions file...
+      - printf '[{"name":"InventoryService","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+  build:
+    commands:
+      - "echo Build started on `date` "
+      - "cd $CODEBUILD_SRC_DIR/InventoryService/src/"
+      - "docker build -t inventoryservice ."
+      - "docker tag inventoryservice:latest $REPOSITORY_URI:$IMAGE_TAG"
+  post_build:
+    commands:
+      - "echo Build completed on `date`"
+      - "echo Pushing the Docker image..."
+      - "docker push $REPOSITORY_URI:$IMAGE_TAG"
+artifacts:
+    files: imagedefinitions.json
