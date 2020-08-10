@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="UnishopModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="basket">
+          <Key>
+            <PropertyRef Name="basket_id" />
+          </Key>
+          <Property Name="basket_id" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="user_id" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="unicorn_id" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="creation_date" Type="datetime2" Precision="7" Nullable="false" />
+        </EntityType>
+        <EntityType Name="inventory">
+          <Key>
+            <PropertyRef Name="unicorn_id" />
+          </Key>
+          <Property Name="unicorn_id" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="name" Type="varchar" MaxLength="64" />
+          <Property Name="description" Type="varchar" MaxLength="255" />
+          <Property Name="price" Type="decimal" Precision="6" Scale="2" />
+          <Property Name="image" Type="varchar" MaxLength="255" />
+          <Property Name="date_create" Type="datetime" />
+        </EntityType>
+        <EntityType Name="users">
+          <Key>
+            <PropertyRef Name="user_id" />
+          </Key>
+          <Property Name="user_id" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="email" Type="nvarchar" MaxLength="64" Nullable="false" />
+          <Property Name="first_name" Type="nvarchar" MaxLength="64" />
+          <Property Name="last_name" Type="nvarchar" MaxLength="64" />
+          <Property Name="password" Type="nvarchar" MaxLength="255" Nullable="false" />
+        </EntityType>
+        <EntityContainer Name="UnishopModelStoreContainer">
+          <EntitySet Name="basket" EntityType="Self.basket" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="inventory" EntityType="Self.inventory" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="users" EntityType="Self.users" Schema="dbo" store:Type="Tables" />
+        </EntityContainer>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="UnishopModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityContainer Name="UnishopEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="baskets" EntityType="UnishopModel.basket" />
+          <EntitySet Name="users" EntityType="UnishopModel.user" />
+          <EntitySet Name="inventories" EntityType="UnishopModel.inventory" />
+          </EntityContainer>
+        <EntityType Name="basket">
+          <Key>
+            <PropertyRef Name="basket_id" />
+          </Key>
+          <Property Name="basket_id" Type="Guid" Nullable="false" />
+          <Property Name="user_id" Type="Guid" Nullable="false" />
+          <Property Name="unicorn_id" Type="Guid" Nullable="false" />
+          <Property Name="creation_date" Type="DateTime" Nullable="false" Precision="7" />
+        </EntityType>
+        <EntityType Name="user">
+          <Key>
+            <PropertyRef Name="user_id" />
+          </Key>
+          <Property Name="user_id" Type="Guid" Nullable="false" />
+          <Property Name="email" Type="String" Nullable="false" MaxLength="64" FixedLength="false" Unicode="true" />
+          <Property Name="first_name" Type="String" MaxLength="64" FixedLength="false" Unicode="true" />
+          <Property Name="last_name" Type="String" MaxLength="64" FixedLength="false" Unicode="true" />
+          <Property Name="password" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="inventory">
+          <Key>
+            <PropertyRef Name="unicorn_id" />
+          </Key>
+          <Property Name="unicorn_id" Type="Guid" Nullable="false" />
+          <Property Name="name" Type="String" MaxLength="64" FixedLength="false" Unicode="false" />
+          <Property Name="description" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
+          <Property Name="price" Type="Decimal" Precision="6" Scale="2" />
+          <Property Name="image" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
+          <Property Name="date_create" Type="DateTime" Precision="3" />
+        </EntityType>
+        </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="UnishopModelStoreContainer" CdmEntityContainer="UnishopEntities">
+          <EntitySetMapping Name="baskets">
+            <EntityTypeMapping TypeName="UnishopModel.basket">
+              <MappingFragment StoreEntitySet="basket">
+                <ScalarProperty Name="creation_date" ColumnName="creation_date" />
+                <ScalarProperty Name="unicorn_id" ColumnName="unicorn_id" />
+                <ScalarProperty Name="user_id" ColumnName="user_id" />
+                <ScalarProperty Name="basket_id" ColumnName="basket_id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="users">
+            <EntityTypeMapping TypeName="UnishopModel.user">
+              <MappingFragment StoreEntitySet="users">
+                <ScalarProperty Name="password" ColumnName="password" />
+                <ScalarProperty Name="last_name" ColumnName="last_name" />
+                <ScalarProperty Name="first_name" ColumnName="first_name" />
+                <ScalarProperty Name="email" ColumnName="email" />
+                <ScalarProperty Name="user_id" ColumnName="user_id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="inventories">
+            <EntityTypeMapping TypeName="UnishopModel.inventory">
+              <MappingFragment StoreEntitySet="inventory">
+                <ScalarProperty Name="date_create" ColumnName="date_create" />
+                <ScalarProperty Name="image" ColumnName="image" />
+                <ScalarProperty Name="price" ColumnName="price" />
+                <ScalarProperty Name="description" ColumnName="description" />
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="unicorn_id" ColumnName="unicorn_id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="true" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

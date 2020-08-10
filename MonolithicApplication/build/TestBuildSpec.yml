@@ -1,0 +1,20 @@
+version: 0.2
+
+env:
+  variables:
+    PROJECT: UnicornShopLegacy
+    DOTNET_FRAMEWORK: 4.7.2
+phases:
+  install:
+    commands:
+      - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Find-PackageProvider -Name "Nuget" | Install-PackageProvider -Verbose -Force'
+      - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Install-Module -Name AWS.Tools.S3 -Force'
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR\MonolithicApplication\src\
+      - nuget restore
+      - msbuild $env:PROJECT.csproj /p:TargetFrameworkVersion=$env:DOTNET_FRAMEWORK /p:Configuration=Release
+      - cd $CODEBUILD_SRC_DIR\MonolithicApplication\test\
+      - msbuild $env:PROJECT.Tests.csproj /p:TargetFrameworkVersion=$env:DOTNET_FRAMEWORK /p:Configuration=Release
+      - .\getMetricsOnly.bat
+      - .\testCoverage.ps1
