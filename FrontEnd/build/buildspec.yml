@@ -1,0 +1,7 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/FrontEnd/src/
+      - aws s3 cp . s3://unicorn-frontend/ --acl public-read --recursive
