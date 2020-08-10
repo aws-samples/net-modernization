@@ -1,0 +1,999 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify,
+# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# This template is used to create the resources required for the AML .NET Modernization workshop.
+# The template can be executed standalone by providing network configurations or can be run as a nested template using the Event Engine driver template.
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: AWS CloudFormation Template to build pipelines for App Modernization Team\'s Monolith to Microservices Unicorn Lab. Assumes that you run the pipeline in us-east-1.
+
+Metadata:
+  AWS::CloudFormation::Interface: 
+    ParameterGroups:
+      - Label:
+          default: Hugo Pipeline Info
+        Parameters:
+          - HugoSourceRepo
+          - HugoSourceBranch
+      - Label:
+          default: Legacy Monolith Application Info
+        Parameters:
+          - LegacySourceRepo
+          - LegacySourceBranch
+      - Label:
+          default: Inventory Service Pipeline Info
+        Parameters:
+          - InventorySourceRepo
+          - InventorySourceBranch
+          - InventoryServiceECRName
+      - Label:
+          default: Basket Service Pipeline Info
+        Parameters:
+          - BasketSourceRepo
+          - BasketSourceBranch
+          - BasketServiceECRName
+      - Label:
+          default: Locust testing Info
+        Parameters:
+          - LocustSourceRepo
+          - LocustSourceBranch
+          - LocustServiceECRName
+      - Label:
+          default: S3 Bucket Info
+        Parameters:
+          - S3BucketName
+          - OtherRegion1
+          - OtherRegion2
+          - OtherRegion3
+
+Parameters:
+  InventoryServiceECRName:
+    Type: String
+    Description: Name of ECR repository for inventory service
+    Default: inventory_service
+  BasketServiceECRName:
+    Type: String
+    Description: Name of ECR repository for basket service
+    Default: basket_service
+  LocustServiceECRName:
+    Type: String
+    Description: Name of ECR repository for locust service
+    Default: locust_service
+
+  HugoSourceRepo:
+    Type: String
+    Description: Name of CodeCommit repository for Hugo site
+    Default: unicorn-store-dotnet
+  HugoSourceBranch:
+      Type: String
+      Description: Name of CodeCommit Branch within HugoSourceRepo
+      Default: hugodocs
+  InventorySourceRepo:
+    Type: String
+    Description: Name of CodeCommit repository for inventory service
+    Default: unicorn-store-dotnet
+  InventorySourceBranch:
+    Type: String
+    Description: Name of CodeCommit Branch within InventorySourceRepo\
+    Default: inventory-service
+  LegacySourceRepo:
+    Type: String
+    Description: Name of CodeCommit repository for Legacy Monolith application
+    Default: unicorn-store-dotnet
+  LegacySourceBranch:
+    Type: String
+    Description: Name of CodeCommit Branch within LegacySourceRepo
+    Default: legacy
+  BasketSourceRepo:
+    Type: String
+    Description: Name of CodeCommit repository for basket service
+    Default: unicorn-store-dotnet
+  BasketSourceBranch:
+    Type: String
+    Description: Name of CodeCommit Branch within BasketSourceRepo
+    Default: basket-service
+  LocustSourceRepo:
+    Type: String
+    Description: Name of CodeCommit repository for locust testing
+    Default: unicorn-store-dotnet
+  LocustSourceBranch:
+    Type: String
+    Description: Name of CodeCommit Branch within LocustSourceRepo
+    Default: locust
+  S3BucketName:
+    Type: String
+    Description: Name of the S3 bucket where all CodeBuild artifacts are stored and where the Hugo Site is hosted
+    Default: unicorn-store-monolith-to-microservices-bucket
+  OtherRegion1:
+    Type: String
+    Default: us-west-1
+  OtherRegion2:
+    Type: String
+    Default: ap-southeast-1
+  OtherRegion3:
+    Type: String
+    Default: eu-west-1
+
+Resources:
+# S3 Bucket used to host Hugo site as well as store zipped lambda package and EBS package
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DependsOn: TriggerLambda
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: 
+        !Join
+          - '-'
+          -
+            - !Ref 'S3BucketName'
+            - !Ref 'AWS::Region'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+      PublicAccessBlockConfiguration:
+        IgnorePublicAcls: false
+        BlockPublicAcls: false
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+# Service roles needed to use CodeBuild and CodePipeline (used by each pipeline)    
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Description: Creating service role in IAM for AWS CodeBuild
+    Properties:
+      RoleName: CodeBuildServiceRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+                - "s3.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+
+  CodePipelineRole:
+    Type: "AWS::IAM::Role"
+    Description: Creating service role in IAM for AWS CodeDeploy
+    Properties:
+      RoleName: CodePipelineServiceRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodePipelineFullAccess
+        - arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AWSCodeCommitFullAccess
+
+# Resources used to build and publish hugo site 
+  HugoCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: HugoBuild
+      Description: Build project to deploy Hugo docs.
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: docs/build/buildspec.yml
+      Environment:                                   
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - 
+            Name: S3_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'S3BucketName'
+          - 
+            Name: MAIN_REGION
+            Type: PLAINTEXT
+            Value: !Ref 'AWS::Region'
+          - 
+            Name: OTHER_REGION_1
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion1'
+          -
+            Name: OTHER_REGION_2
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion2'
+          - 
+            Name: OTHER_REGION_3
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion3'
+      ServiceRole: !Ref 'CodeBuildRole'
+      Artifacts:
+        Type: CODEPIPELINE
+
+  HugoCodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref 'S3Bucket'
+        Type: S3
+      Name: HugoCodePipeline
+      RoleArn: !GetAtt 'CodePipelineRole.Arn'
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: HugoCodeCommit
+              InputArtifacts: []
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: HugoSourceOutput
+              Configuration:
+                RepositoryName: !Ref 'HugoSourceRepo'
+                BranchName: !Ref 'HugoSourceBranch'
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: HugoCodeBuild
+              InputArtifacts: 
+                - Name: HugoSourceOutput
+              OutputArtifacts:
+                - Name: HugoBuildOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref 'HugoCodeBuildProject'
+              RunOrder: 1
+
+  HugoCloudWatchEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        EventPattern:
+          source:
+            - aws.codecommit
+          detail-type:
+            - 'CodeCommit Repository State Change'
+          resources:
+            - !Join [ '', [ 'arn:aws:codecommit:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref HugoSourceRepo ] ]
+          detail:
+            event:
+              - referenceCreated
+              - referenceUpdated
+            referenceType:
+              - branch
+            referenceName:
+              - master
+        Targets:
+          -
+            Arn: 
+              !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref HugoCodePipeline ] ] 
+            RoleArn: !GetAtt AmazonCloudWatchEventRole.Arn
+            Id: codepipeline-HugoPipeline
+
+# Resources needed to create the legacy monolith application. Can be deployed on EBS instance
+  LegacyCodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: LegacyCodeBuildProject
+      Description: CodeBuild Project for the legacy application
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: build/Unicorn.Store/buildspec.yml
+      Environment:
+        Type: WINDOWS_CONTAINER
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: mcr.microsoft.com/dotnet/framework/sdk:4.8
+        EnvironmentVariables:
+          - 
+            Name: S3_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'S3BucketName'
+          - 
+            Name: MAIN_REGION
+            Type: PLAINTEXT
+            Value: !Ref 'AWS::Region'
+          - 
+            Name: OTHER_REGION_1
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion1'
+          -
+            Name: OTHER_REGION_2
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion2'
+          - 
+            Name: OTHER_REGION_3
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion3'        
+      ServiceRole: !Ref 'CodeBuildRole'
+      Artifacts:
+        Type: CODEPIPELINE
+
+  LegacyCodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref 'S3Bucket'
+        Type: S3
+      Name: LegacyCodePipeline
+      RoleArn: !GetAtt 'CodePipelineRole.Arn'
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: LegacyCodeCommit
+              InputArtifacts: []
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: LegacySourceOutput
+              Configuration:
+                RepositoryName: !Ref 'LegacySourceRepo'
+                BranchName: !Ref 'LegacySourceBranch'
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: LegacyCodeBuild
+              InputArtifacts: 
+                - Name: LegacySourceOutput
+              OutputArtifacts:
+                - Name: LegacyBuildOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref 'LegacyCodeBuild'
+              RunOrder: 1
+
+  LegacyCloudWatchEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        EventPattern:
+          source:
+            - aws.codecommit
+          detail-type:
+            - 'CodeCommit Repository State Change'
+          resources:
+            - !Join [ '', [ 'arn:aws:codecommit:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref LegacySourceRepo ] ]
+          detail:
+            event:
+              - referenceCreated
+              - referenceUpdated
+            referenceType:
+              - branch
+            referenceName:
+              - master
+        Targets:
+          -
+            Arn: 
+              !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref LegacyCodePipeline ] ] 
+            RoleArn: !GetAtt AmazonCloudWatchEventRole.Arn
+            Id: codepipeline-HugoPipeline
+
+# Resources needed to create inventory service pipieline. User must manually create ECR and upload buildspec.yml URL in order
+# to push image to proper ECR repository in CodeBuild stage.
+  InventoryServiceBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: InventoryServiceBuild
+      Description: Build project to deploy Inventory Service.
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: build/Unicorn.InventoryService/buildspec.yml
+      Environment:                                   
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - 
+            Name: S3_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'S3BucketName'
+          - 
+            Name: MAIN_REGION
+            Type: PLAINTEXT
+            Value: !Ref 'AWS::Region'
+          - 
+            Name: OTHER_REGION_1
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion1'
+          -
+            Name: OTHER_REGION_2
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion2'
+          - 
+            Name: OTHER_REGION_3
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion3'
+          - 
+            Name: INVENTORY_ECR_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'InventoryServiceECRName'
+          - 
+            Name: AWS_ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Ref AWS::AccountId
+      ServiceRole: !Ref 'CodeBuildRole'
+      Artifacts:
+        Type: CODEPIPELINE
+
+  InventoryServiceCodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref 'S3Bucket'
+        Type: S3
+      Name: InventoryServiceCodePipeline
+      RoleArn: !GetAtt 'CodePipelineRole.Arn'
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: CodeCommit
+              InputArtifacts: []
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: InventorySourceOutput
+              Configuration:
+                RepositoryName: !Ref 'InventorySourceRepo'
+                BranchName: !Ref 'InventorySourceBranch'
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: CodeBuild
+              InputArtifacts: 
+                - Name: InventorySourceOutput
+              OutputArtifacts:
+                - Name: InventoryBuildOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref 'InventoryServiceBuild'
+              RunOrder: 1
+
+  InventoryServiceECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref InventoryServiceECRName
+
+  InventoryCloudWatchEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        EventPattern:
+          source:
+            - aws.codecommit
+          detail-type:
+            - 'CodeCommit Repository State Change'
+          resources:
+            - !Join [ '', [ 'arn:aws:codecommit:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref InventorySourceRepo ] ]
+          detail:
+            event:
+              - referenceCreated
+              - referenceUpdated
+            referenceType:
+              - branch
+            referenceName:
+              - master
+        Targets:
+          -
+            Arn: 
+              !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref InventoryServiceCodePipeline ] ] 
+            RoleArn: !GetAtt AmazonCloudWatchEventRole.Arn
+            Id: codepipeline-HugoPipeline
+
+# Resources needed to create inventory service pipieline. Currently buildspec.yml pushes image to ECR repo, but this will ultimately
+# be modfied to create a lambda package
+  BasketServiceCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: BasketServiceBuild
+      Description: Build project to deploy Basket Service.
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: build/Unicorn.BasketService/buildspec.yml
+      Environment:                                   
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - 
+            Name: S3_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'S3BucketName'
+          - 
+            Name: MAIN_REGION
+            Type: PLAINTEXT
+            Value: !Ref 'AWS::Region'
+          - 
+            Name: OTHER_REGION_1
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion1'
+          -
+            Name: OTHER_REGION_2
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion2'
+          - 
+            Name: OTHER_REGION_3
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion3'
+          - 
+            Name: BASKET_ECR_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'BasketServiceECRName'
+          - 
+            Name: AWS_ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Ref AWS::AccountId
+      ServiceRole: !Ref 'CodeBuildRole'
+      Artifacts:
+        Type: CODEPIPELINE
+
+  BasketServiceCodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref 'S3Bucket'
+        Type: S3
+      Name: BasketServiceCodePipeline
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: CodeCommit
+              InputArtifacts: []
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: BasketSourceOutput
+              Configuration:
+                RepositoryName: !Ref BasketSourceRepo
+                BranchName: !Ref BasketSourceBranch
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: CodeBuild
+              InputArtifacts: 
+                - Name: BasketSourceOutput
+              OutputArtifacts:
+                - Name: BasketBuildOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref 'BasketServiceCodeBuildProject'
+              RunOrder: 1
+
+  BasketServiceECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref BasketServiceECRName
+
+  BasketCloudWatchEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        EventPattern:
+          source:
+            - aws.codecommit
+          detail-type:
+            - 'CodeCommit Repository State Change'
+          resources:
+            - !Join [ '', [ 'arn:aws:codecommit:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref BasketSourceRepo ] ]
+          detail:
+            event:
+              - referenceCreated
+              - referenceUpdated
+            referenceType:
+              - branch
+            referenceName:
+              - master
+        Targets:
+          -
+            Arn: 
+              !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref BasketServiceCodePipeline ] ] 
+            RoleArn: !GetAtt AmazonCloudWatchEventRole.Arn
+            Id: codepipeline-HugoPipeline
+
+# Resources needed to create the locust tests pipelines
+  LocustTestBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: LocustTestCodeBuildProject
+      Description: Build stage for Locust load testing application.
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: build/locust/buildspec.yml
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:1.0
+        EnvironmentVariables:
+          - 
+            Name: S3_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'S3BucketName'
+          - 
+            Name: MAIN_REGION
+            Type: PLAINTEXT
+            Value: !Ref 'AWS::Region'
+          - 
+            Name: OTHER_REGION_1
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion1'
+          -
+            Name: OTHER_REGION_2
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion2'
+          - 
+            Name: OTHER_REGION_3
+            Type: PLAINTEXT
+            Value: !Ref 'OtherRegion3'
+          - 
+            Name: LOCUST_ECR_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'LocustServiceECRName'
+      ServiceRole: !Ref 'CodeBuildRole'
+      Artifacts:
+        Type: CODEPIPELINE
+
+  LocustCodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref 'S3Bucket'
+        Type: S3
+      Name: LocustCodePipeline
+      RoleArn: !GetAtt 'CodePipelineRole.Arn'
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: LocustCodeCommit
+              InputArtifacts: []
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: LocustSourceOutput
+              Configuration:
+                RepositoryName: !Ref 'LocustSourceRepo'
+                BranchName: !Ref 'LocustSourceBranch'
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: LocustCodeBuild
+              InputArtifacts: 
+                - Name: LocustSourceOutput
+              OutputArtifacts:
+                - Name: LocustBuildOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref 'LocustTestBuild'
+              RunOrder: 1
+
+  LocustECR:
+      Type: AWS::ECR::Repository
+      Properties:
+        RepositoryName: !Ref LocustServiceECRName
+
+  LocustCloudWatchEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        EventPattern:
+          source:
+            - aws.codecommit
+          detail-type:
+            - 'CodeCommit Repository State Change'
+          resources:
+            - !Join [ '', [ 'arn:aws:codecommit:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref LocustSourceRepo ] ]
+          detail:
+            event:
+              - referenceCreated
+              - referenceUpdated
+            referenceType:
+              - branch
+            referenceName:
+              - master
+        Targets:
+          -
+            Arn: 
+              !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref LocustCodePipeline ] ] 
+            RoleArn: !GetAtt AmazonCloudWatchEventRole.Arn
+            Id: codepipeline-HugoPipeline
+
+### Resources necessary to perform cross-region replication ###
+  LambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action:
+              - "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+        Version: "2012-10-17"
+      Path: /
+      Policies:
+        -
+          PolicyDocument:
+            Statement:
+              -
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Effect: Allow
+                Resource: "arn:aws:logs:*:*:*"
+              -
+                Action:
+                  - "s3:*"
+                Effect: Allow
+                Resource: "*"
+            Version: "2012-10-17"
+          PolicyName: root
+    Type: "AWS::IAM::Role"
+
+
+  CrossRegionBucketMaker:
+    Properties:
+      Code:
+        ZipFile:
+          !Sub |
+            var aws = require('aws-sdk');
+            var response = require('cfn-response');
+            exports.handler = function(event, context, callback){
+                var s3One = new aws.S3({region: event.ResourceProperties.DestBucketRegion1});
+                var s3Two = new aws.S3({region: event.ResourceProperties.DestBucketRegion2});
+                var s3Three = new aws.S3({region: event.ResourceProperties.DestBucketRegion3});
+                if (event.RequestType == 'Create' || event.RequestType == 'Update'){
+                    var bucketOneParams = {
+                        Bucket: event.ResourceProperties.DestBucketName1,
+                    };
+                    var bucketTwoParams = {
+                        Bucket: event.ResourceProperties.DestBucketName2,
+                    };
+                    var bucketThreeParams = {
+                        Bucket: event.ResourceProperties.DestBucketName3,
+                    };
+                    s3One.createBucket(bucketOneParams, function(err, data) {
+                        if (err){
+                            console.log(err, err.stack)
+                            response.send(event, context, response.FAILED, err)
+                        }
+                        else {
+                            console.log(data)
+                            var versioningParams = {
+                                Bucket: event.ResourceProperties.DestBucketName1,
+                                VersioningConfiguration: {
+                                    Status: 'Enabled'
+                                }
+                            };
+                            s3One.putBucketVersioning(versioningParams, function(err, data) {
+                                if (err) {
+                                    console.log(err, err.stack);
+                                }
+                                else {
+                                    console.log(data)
+                                    response.send(event, context, response.SUCCESS, {}, event.DestBucketName1);
+                                    callback(null,'Bucket 1 created!');
+                                }
+                            });
+                        }
+                    });
+                    s3Two.createBucket(bucketTwoParams, function(err, data) {
+                        if (err){
+                            console.log(err, err.stack)
+                            response.send(event, context, response.FAILED, err)
+                        }
+                        else {
+                            console.log(data)
+                            var versioningParams = {
+                                Bucket: event.ResourceProperties.DestBucketName2,
+                                VersioningConfiguration: {
+                                    Status: 'Enabled'
+                                }
+                            };
+                            s3Two.putBucketVersioning(versioningParams, function(err, data) {
+                                if (err) {
+                                    console.log(err, err.stack);
+                                }
+                                else {
+                                    console.log(data)
+                                    response.send(event, context, response.SUCCESS, {}, event.DestBucketName2);
+                                    callback(null,'Bucket 2 created!');
+                                }
+                            });
+                        }
+                    });
+                    s3Three.createBucket(bucketThreeParams, function(err, data) {
+                        if (err){
+                            console.log(err, err.stack)
+                            response.send(event, context, response.FAILED, err)
+                        }
+                        else {
+                            console.log(data)
+                            var versioningParams = {
+                                Bucket: event.ResourceProperties.DestBucketName3,
+                                VersioningConfiguration: {
+                                    Status: 'Enabled'
+                                }
+                            };
+                            s3Three.putBucketVersioning(versioningParams, function(err, data) {
+                                if (err) { 
+                                    console.log(err, err.stack);
+                                }
+                                else {
+                                    console.log(data)
+                                    response.send(event, context, response.SUCCESS, {}, event.DestBucketName3);
+                                    callback(null,'Bucket 3 created!');
+                                }
+                            });
+                        }
+                    });
+                }
+            };
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs12.x
+      Timeout: 30
+    Type: "AWS::Lambda::Function"
+  TriggerLambda:
+    Type: Custom::LambdaTrig
+    Properties:
+      ServiceToken: !GetAtt CrossRegionBucketMaker.Arn
+      DestBucketName1: 
+        !Join
+          - '-'
+          -
+            - !Ref 'S3BucketName'
+            - !Ref 'OtherRegion1'
+      DestBucketName2:
+        !Join
+          - '-'
+          -
+            - !Ref 'S3BucketName'
+            - !Ref 'OtherRegion2'
+      DestBucketName3:
+        !Join
+          - '-'
+          -
+            - !Ref 'S3BucketName'
+            - !Ref 'OtherRegion3'
+      DestBucketRegion1: !Ref OtherRegion1
+      DestBucketRegion2: !Ref OtherRegion2
+      DestBucketRegion3: !Ref OtherRegion3
+  S3Role:
+    Properties:
+      RoleName: S3Role
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action: "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              Service:
+                - s3.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        -  arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Path: /
+    Type: "AWS::IAM::Role"
+
+  AmazonCloudWatchEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        -
+          PolicyName: cwe-pipeline-execution-hugo
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref HugoCodePipeline ] ] 
+        -
+          PolicyName: cwe-pipeline-execution-legacy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref LegacyCodePipeline ] ] 
+        -
+          PolicyName: cwe-pipeline-execution-inventory
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref InventoryServiceCodePipeline ] ] 
+        -
+          PolicyName: cwe-pipeline-execution-basket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref BasketServiceCodePipeline ] ] 
+        -
+          PolicyName: cwe-pipeline-execution-locust
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref LocustCodePipeline ] ] 
+Outputs:
+  WebsiteURL:
+    Value: !GetAtt [S3Bucket, WebsiteURL]
+    Description: URL for website hosted on S3
