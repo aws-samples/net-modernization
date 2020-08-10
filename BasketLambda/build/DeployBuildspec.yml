@@ -1,0 +1,10 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - dotnet tool install -g Amazon.Lambda.Tools
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/BasketLambda/src/
+      - dotnet lambda deploy-function

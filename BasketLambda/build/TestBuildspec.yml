@@ -1,0 +1,10 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/BasketLambda/src/
+      - dotnet restore
+      - dotnet build
+      - dotnet test ../test/BasketLambda.Tests.csproj /p:CollectCoverage=true /p:Threshold=80 /p:ThresholdType=line /p:ThresholdStat=average
+      - dotnet clean
