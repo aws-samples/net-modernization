@@ -1,0 +1,42 @@
+# Service configuration for inventory-service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service-service
+  labels:
+    app: inventory-service
+spec:
+  selector:
+    app: inventory-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30000
+  type: LoadBalancer
+---
+# Deployment configuration for inventory service app.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service-deployment
+  labels:
+    app: inventory-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory-service
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+    spec:
+      containers:
+      - name: inventoryservice
+        image: # Input Image URI from ECR. 
+        ports:
+        - containerPort: 80
+        env:
+        - name: ORCHESTRARTION_ENVIRONMENT
+          value: "EKS"

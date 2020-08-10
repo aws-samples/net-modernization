@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR/InventoryService/test/
+      - dotnet restore
+      - dotnet build
+      - dotnet test InventoryService.Tests.csproj /p:CollectCoverage=true /p:Threshold=40 /p:ThresholdType=line /p:ThresholdStat=average
