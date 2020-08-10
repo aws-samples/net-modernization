@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - echo 'Packaging files to deloy to Elastic Beanstock'
+      - cd $CODEBUILD_SRC_DIR/Locust/src/
+  post_build:
+    commands:
+      - mkdir $CODEBUILD_SRC_DIR/Locust/artifacts/
+      - zip $CODEBUILD_SRC_DIR/Locust/artifacts/locusttest.zip Dockerfile Dockerrun.aws.json locustfile.py 
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet/ --acl public-read --recursive
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet-us-west-2/ --acl public-read --recursive
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet-us-east-1/ --acl public-read --recursive
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet-eu-west-1/ --acl public-read --recursive  
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet-ap-southeast-1/ --acl public-read --recursive 
+artifacts:
+  files:
+    - '**/*'
+    - '*'
+  base-directory: $CODEBUILD_SRC_DIR/Locust/src/
+  discard-paths: no
