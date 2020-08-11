@@ -19,8 +19,8 @@ The instructions for each lab in the workshop can be found here: https://net-mod
 | [Lab 1: Environment Setup](https://net-modernization.workshop.aws/lab1.html) | Set up pre-configured AWS resources, connect to the remote developer environment, download the code for the workshop, and view the legacy application |
 | [Lab 2: Facade Configuration](https://net-modernization.workshop.aws/lab2.html) | Front the legacy application with API Gateway and enable authentication with Amazon Cognito   |
 | [Lab 3: Serverless Basket Service](https://net-modernization.workshop.aws/lab3.html) | Use AWS Lambda and DynamoDB to strangle out the basket microservice|
-| [Lab 4: Database Migration](https://net-modernization.workshop.aws/lab4.html) | Migrate inventory service's Microsoft SQL Server data to Amazon Aurora |
-| [Lab 5: Containerized Inventory Service](https://net-modernization.workshop.aws/lab5.html) | Extract and deploy the inventory microservice using Amazon Elastic Container Service |
+| [Lab 4: Containerized Inventory Service](https://net-modernization.workshop.aws/lab4.html) | Migrate inventory service's Microsoft SQL Server data to Amazon Aurora |
+| [Lab 5: Database Migration](https://net-modernization.workshop.aws/lab5.html) | Extract and deploy the inventory microservice using Amazon Elastic Container Service |
 | [Extra Credit](https://net-modernization.workshop.aws/extra.html) | Utilize [Amazon Elastic Kubernetes Services](https://aws.amazon.com/eks/) and [Amazon Rekognition](https://aws.amazon.com/rekognition/) to further modernize the Unishop |
 
 ### Repository Structure
