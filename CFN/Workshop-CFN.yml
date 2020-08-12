@@ -73,7 +73,7 @@ Resources:
   UnicornWorkshopStack:
       Type: AWS::CloudFormation::Stack
       Properties:
-        TemplateURL: "https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Modernization-Resources-CFN.ymll"
+        TemplateURL: "https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Modernization-Resources-CFN.yml"
         Parameters:
           VpcId: !GetAtt VPCResourceStack.Outputs.VpcId
           SubnetIdList: !GetAtt VPCResourceStack.Outputs.Subnets
