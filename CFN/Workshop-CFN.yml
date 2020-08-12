@@ -67,6 +67,7 @@ Resources:
         VpcId: !GetAtt VPCResourceStack.Outputs.VpcId
         SubnetId: !Select [0, !Split [',',!GetAtt VPCResourceStack.Outputs.Subnets]]
         StartDockerDaemonEC2: 'True'
+        SampleAppGitRepoUrl	: "https://github.com/aws-samples/net-modernization.git"
 
   #Create resources for Unicorn Workshop
   UnicornWorkshopStack:
