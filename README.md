@@ -12,16 +12,16 @@ As part of this workshop the CTO would like to explore moving to a microservices
 
 ### Labs
 
-The instructions for each lab in the workshop can be found here: http://hugoworkshop.s3-website.us-east-2.amazonaws.com/.
+The instructions for each lab in the workshop can be found here: https://net-modernization.workshop.aws/.
 
 | Lab | Description |
 | ------ | ------ |
-| [Lab 1: Environment Setup](http://hugoworkshop.s3-website.us-east-2.amazonaws.com/lab1.html) | Set up pre-configured AWS resources, connect to the remote developer environment, download the code for the workshop, and view the legacy application |
-| [Lab 2: Facade Configuration](http://hugoworkshop.s3-website.us-east-2.amazonaws.com/lab2.html) | Front the legacy application with API Gateway and enable authentication with Amazon Cognito   |
-| [Lab 3: Serverless Basket Service](http://hugoworkshop.s3-website.us-east-2.amazonaws.com/lab3.html) | Use AWS Lambda and DynamoDB to strangle out the basket microservice|
-| [Lab 4: Database Migration](http://hugoworkshop.s3-website.us-east-2.amazonaws.com/lab4.html) | Migrate inventory service's Microsoft SQL Server data to Amazon Aurora |
-| [Lab 5: Containerized Inventory Service](http://hugoworkshop.s3-website.us-east-2.amazonaws.com/lab5.html) | Extract and deploy the inventory microservice using Amazon Elastic Container Service |
-| [Extra Credit](http://hugoworkshop.s3-website.us-east-2.amazonaws.com/extra.html) | Utilize [Amazon Elastic Kubernetes Services](https://aws.amazon.com/eks/) and Amazon Rekognition(https://aws.amazon.com/rekognition/) to further modernize the Unishop |
+| [Lab 1: Environment Setup](https://net-modernization.workshop.aws/lab1.html) | Set up pre-configured AWS resources, connect to the remote developer environment, download the code for the workshop, and view the legacy application |
+| [Lab 2: Facade Configuration](https://net-modernization.workshop.aws/lab2.html) | Front the legacy application with API Gateway and enable authentication with Amazon Cognito   |
+| [Lab 3: Serverless Basket Service](https://net-modernization.workshop.aws/lab3.html) | Use AWS Lambda and DynamoDB to strangle out the basket microservice|
+| [Lab 4: Containerized Inventory Service](https://net-modernization.workshop.aws/lab4.html) | Migrate inventory service's Microsoft SQL Server data to Amazon Aurora |
+| [Lab 5: Database Migration](https://net-modernization.workshop.aws/lab5.html) | Extract and deploy the inventory microservice using Amazon Elastic Container Service |
+| [Extra Credit](https://net-modernization.workshop.aws/extra.html) | Utilize [Amazon Elastic Kubernetes Services](https://aws.amazon.com/eks/) and [Amazon Rekognition](https://aws.amazon.com/rekognition/) to further modernize the Unishop |
 
 ### Repository Structure
 
@@ -34,14 +34,14 @@ The Locust directory contains the source code and files necessary to use the [Lo
 The InventoryService directory contains the source code used for the containerization of the Unishop inventory service. 
 
 ### Launch Your Own Workshop
-We prepared AWS accounts for you to use, but you can also go through this workshop in your own AWS account. If you want to do this, please download [this CloudFormation template](https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-EE-Driver-CFN.yml) and deploy it in your own AWS account. The workshop is currently only supported in the following regions: us-east-1, us-west-2, eu-west-1, and ap-southeast-1. You can also launch this CloudFormation stack, using your account, with the links below:
+We prepared AWS accounts for you to use, but you can also go through this workshop in your own AWS account. If you want to do this, please download [this CloudFormation template](https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) and deploy it in your own AWS account. The workshop is currently only supported in the following regions: us-east-1, us-west-2, eu-west-1, and ap-southeast-1. You can also launch this CloudFormation stack, using your account, with the links below:
 
 | AWS Region Code            | Name                     | Launch |
 | --- | --- | --- 
-| us-east-1 |US East (N. Virginia)|[Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-EE-Driver-CFN.yml) |
-| us-west-2 |US West (Oregon)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-EE-Driver-CFN.yml) |
-| eu-west-1 |EU (Ireland)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-EE-Driver-CFN.yml) |
-| ap-southeast-1 |AP (Sydney)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-EE-Driver-CFN.yml) |
+| us-east-1 |US East (N. Virginia)|[Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
+| us-west-2 |US West (Oregon)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
+| eu-west-1 |EU (Ireland)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
+| ap-southeast-1 |AP (Singapore)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
 
 ### Security
 
