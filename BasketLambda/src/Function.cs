@@ -23,6 +23,7 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
+using Amazon.Lambda.SNSEvents;
 using BasketLambda.Interfaces;
 using BasketLambda.Repository;
 using Newtonsoft.Json;
@@ -104,6 +105,20 @@ namespace BasketLambda
                     Headers = headers,
                     StatusCode = 500,
                 };
+            }
+        }
+        
+        /// <summary>
+        /// Function to carry out Basket item status update on SNS event.
+        /// </summary>
+        /// <param name="snsEvent"></param>
+        public async Task SNSHandler(SNSEvent snsEvent)
+        {
+            foreach (var record in snsEvent.Records)
+            {
+                var snsRecord = record.Sns;
+                var unicornAvailableMessage = JsonConvert.DeserializeObject<SNSMessage>(snsRecord.Message);
+                await this.dynamoDBService.UpdateItemAvailability(unicornAvailableMessage.unicorn_id, unicornAvailableMessage.available);
             }
         }
     }

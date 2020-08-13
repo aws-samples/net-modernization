@@ -16,11 +16,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Amazon.Lambda.APIGatewayEvents;
-using Amazon.Lambda.Core;
 
 namespace BasketLambda.Interfaces
 {
@@ -48,5 +44,12 @@ namespace BasketLambda.Interfaces
         /// <param name="unicornId">Unicorn Id to add to user basket. </param>
         /// <returns>Serialized Updated user basket. </returns>
         public Task<string> AddToBasket(string userId, string unicornId);
+
+        /// <summary>
+        /// Funtion that sets the item in basket as available or not.
+        /// </summary>
+        /// <param name="unicornId">Unicorn Id to update. </param>
+        /// <param name="available">The current availability</param>
+        public Task UpdateItemAvailability(string unicornId, bool available);
     }
 }

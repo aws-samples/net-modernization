@@ -16,9 +16,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using BasketLambda.Interfaces;
@@ -27,6 +25,8 @@ namespace BasketLambda.Repository
 {
     public class DynamoDBRepository : IDynamoDBRepository
     {
+        private const string UnicornIdIndexName = "unicorn_id_index";
+
         private IDynamoDBContext dynamoDBContext;
 
         public DynamoDBRepository(IDynamoDBContext context)
@@ -35,9 +35,32 @@ namespace BasketLambda.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<Basket> GetDocument(string userId)
+        public async Task DeleteDocument(string userId, string basketId)
         {
-            return await this.dynamoDBContext.LoadAsync<Basket>(userId);
+            await this.dynamoDBContext.DeleteAsync<Basket>(userId, basketId);
+        }
+
+        /// <inheritdoc/>
+        public async Task<Basket> GetDocument(string userId, string basketId)
+        {
+            return await this.dynamoDBContext.LoadAsync<Basket>(userId, basketId);
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<Basket>> GetUnicornDocuments(string unicornId)
+        {
+            var query = this.dynamoDBContext.QueryAsync<Basket>(unicornId, new DynamoDBOperationConfig
+            {
+                IndexName = UnicornIdIndexName
+            });
+            return await query.GetRemainingAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<Basket>> GetUserDocuments(string userId)
+        {
+            var query = this.dynamoDBContext.QueryAsync<Basket>(userId);
+            return await query.GetRemainingAsync();
         }
 
         /// <inheritdoc/>

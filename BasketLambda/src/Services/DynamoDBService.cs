@@ -17,14 +17,9 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.DataModel;
 using BasketLambda.Interfaces;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace BasketLambda
 {
@@ -40,33 +35,17 @@ namespace BasketLambda
         /// <inheritdoc/>
         public async Task<string> GetBasket(string userId)
         {
-            Basket fetchedBasket;
-            if ((fetchedBasket = await this.dynamoDBRepository.GetDocument(userId)) == null)
-            {
-                return JsonConvert.SerializeObject(fetchedBasket);
-            }
-            else
-            {
-                var baskets = (from item in fetchedBasket.Items
-                               select new
-                               {
-                                   user_id = userId,
-                                   item.basket_id,
-                                   item.unicorn_id,
-                               }).ToList();
-
-                return JsonConvert.SerializeObject(baskets);
-            }
+            var basketItems = await this.dynamoDBRepository.GetUserDocuments(userId);
+            return JsonConvert.SerializeObject(basketItems);
         }
 
         /// <inheritdoc/>
         public async Task<string> DeleteBasket(string userId, string basketId)
         {
-            Basket fetchedBasket;
-            if ((fetchedBasket = await this.dynamoDBRepository.GetDocument(userId)) != null)
+            var fetchedBasket = await this.dynamoDBRepository.GetDocument(userId, basketId);
+            if (fetchedBasket != null)
             {
-                fetchedBasket.Items.RemoveAll(item => item.basket_id == basketId);
-                await this.dynamoDBRepository.SaveDocument(fetchedBasket);
+                await this.dynamoDBRepository.DeleteDocument(userId, basketId);
                 return JsonConvert.SerializeObject(fetchedBasket);
             }
             else
@@ -78,33 +57,27 @@ namespace BasketLambda
         /// <inheritdoc/>
         public async Task<string> AddToBasket(string userId, string unicornId)
         {
-            Item item = new Item
+            var newBasketItem = new Basket
             {
                 basket_id = Guid.NewGuid().ToString(),
                 unicorn_id = unicornId,
+                user_id = userId,
             };
 
-            Basket fetchedBasket;
+            await this.dynamoDBRepository.SaveDocument(newBasketItem);
 
-            if ((fetchedBasket = await this.dynamoDBRepository.GetDocument(userId)) != null)
+            return JsonConvert.SerializeObject(newBasketItem);
+        }
+
+        /// <inheritdoc/>
+        public async Task UpdateItemAvailability(string unicornId, bool available)
+        {
+            var basketItems = await this.dynamoDBRepository.GetUnicornDocuments(unicornId);
+            foreach (var item in basketItems)
             {
-                fetchedBasket.Items.Add(item);
+                item.available = available;
+                await this.dynamoDBRepository.SaveDocument(item);
             }
-            else
-            {
-                fetchedBasket = new Basket
-                {
-                    user_id = userId,
-                };
-                fetchedBasket.Items = new List<Item>
-                {
-                    item,
-                };
-            }
-
-            await this.dynamoDBRepository.SaveDocument(fetchedBasket);
-
-            return JsonConvert.SerializeObject(fetchedBasket);
         }
     }
 }

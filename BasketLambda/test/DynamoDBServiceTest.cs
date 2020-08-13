@@ -18,15 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
-using Amazon.DynamoDBv2.Model.Internal.MarshallTransformations;
-using BasketLambda;
 using BasketLambda.Interfaces;
 using FluentAssertions;
 using Moq;
@@ -57,7 +49,7 @@ namespace BasketLambda.Tests
             this.GivenDynamoDbRepository();
             this.GivenDynamoDBService();
             var basketItems = this.WhenGetBasketWithUserId(Guid.NewGuid().ToString());
-            basketItems.Should().BeNull("because the user does not have a basket");
+            basketItems.Should().BeEmpty("because the user does not have a basket");
         }
 
         [Fact]
@@ -66,9 +58,9 @@ namespace BasketLambda.Tests
             this.GivenDynamoDbRepository();
             this.GivenDynamoDBService();
             var userId = this.GiveUserDocumentWithItem();
-            var basketId = this.fakeDynamoDb[0].Items[0].basket_id;
+            var basketId = this.fakeDynamoDb[0].basket_id;
             var basket = this.WhenDeleteUserBasketItem(userId, basketId);
-            basket.Items.Should().HaveCount(0, "because the item was deleted from user basket");
+            this.fakeDynamoDb.Should().HaveCount(0, "because the item was deleted from user basket");
         }
 
         [Fact]
@@ -79,7 +71,7 @@ namespace BasketLambda.Tests
             var userId = this.GiveUserDocumentWithItem();
             var basketId = Guid.NewGuid().ToString();
             var basket = this.WhenDeleteUserBasketItem(userId, basketId);
-            basket.Items.Should().HaveCount(1, " because the item was not deleted from user basket");
+            this.fakeDynamoDb.Should().HaveCount(1, " because the item was not deleted from user basket");
         }
 
         [Fact]
@@ -90,19 +82,7 @@ namespace BasketLambda.Tests
             var userId = this.GiveUserDocumentWithItem();
             var unicornId = Guid.NewGuid().ToString();
             var basket = this.WhenItemAddedToBasket(userId, unicornId);
-            basket.Items.Should().HaveCount(2, "because the item was added to user basket");
-        }
-
-        [Fact]
-        public void AddToBasket_UserNotFound_UserAndItemAdded()
-        {
-            this.GivenDynamoDbRepository();
-            this.GivenDynamoDBService();
-            var userId = Guid.NewGuid().ToString();
-            var unicornId = Guid.NewGuid().ToString();
-            var basket = this.WhenItemAddedToBasket(userId, unicornId);
-            this.fakeDynamoDb.Should().NotBeEmpty("because a new basket was created for the user");
-            basket.Items.Should().NotBeEmpty().And.HaveCount(1, "because the item was added to user basket");
+            this.fakeDynamoDb.Should().HaveCount(2, "because the item was added to user basket");
         }
 
         private void GivenDynamoDbRepository()
@@ -110,16 +90,30 @@ namespace BasketLambda.Tests
             this.fakeDynamoDb = new List<Basket>();
             this.dynamoDBRepository = new Mock<IDynamoDBRepository>();
 
-            this.dynamoDBRepository.Setup(x => x.GetDocument(It.IsAny<string>()))
+            this.dynamoDBRepository.Setup(x => x.GetUserDocuments(It.IsAny<string>()))
                 .Returns((string id) =>
                 {
-                    return Task.FromResult(this.fakeDynamoDb.Find(basket => basket.user_id == id));
+                    return Task.FromResult(this.fakeDynamoDb.FindAll(basket => basket.user_id == id));
+                });
+
+            this.dynamoDBRepository.Setup(x => x.GetDocument(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns((string userId, string basketId) =>
+                {
+                    return Task.FromResult(this.fakeDynamoDb.Find(basket => basket.basket_id == basketId && basket.user_id == userId));
                 });
 
             this.dynamoDBRepository.Setup(x => x.SaveDocument(It.IsAny<Basket>()))
                 .Returns((Basket basket) =>
                 {
                     this.fakeDynamoDb.Add(basket);
+                    return Task.FromResult(0);
+                });
+
+            this.dynamoDBRepository.Setup(x => x.DeleteDocument(It.IsAny<String>(), It.IsAny<String>()))
+                .Returns((string userId, string basketId) =>
+                {
+                    var item = this.fakeDynamoDb.Find(basket => basket.basket_id == basketId && basket.user_id == userId);
+                    this.fakeDynamoDb.Remove(item);
                     return Task.FromResult(0);
                 });
         }
@@ -130,10 +124,6 @@ namespace BasketLambda.Tests
             this.fakeDynamoDb.Add(new Basket
             {
                 user_id = userId,
-                Items = new List<Item>(),
-            });
-            this.fakeDynamoDb.First().Items.Add(new Item
-            {
                 unicorn_id = Guid.NewGuid().ToString(),
                 basket_id = Guid.NewGuid().ToString(),
             });

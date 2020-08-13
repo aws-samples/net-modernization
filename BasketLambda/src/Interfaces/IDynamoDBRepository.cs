@@ -16,27 +16,45 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
-using Amazon.DynamoDBv2.DataModel;
 
 namespace BasketLambda.Interfaces
 {
     public interface IDynamoDBRepository
     {
         /// <summary>
-        /// Fetches the dynamoDB document based on userId.
+        /// Fetches the dynamoDB documents based on userId.
         /// </summary>
         /// <param name="userId"></param>
         /// <returns>User basket.</returns>
-        Task<Basket> GetDocument(string userId);
+        Task<List<Basket>> GetUserDocuments(string userId);
+
+        /// <summary>
+        /// Fetches the dynamoDB documents based on unicornId.
+        /// </summary>
+        /// <param name="unicornId"></param>
+        /// <returns>Baskets with unicorn.</returns>
+        Task<List<Basket>> GetUnicornDocuments(string unicornId);
+
+        /// <summary>
+        /// Gets the basket item.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="basketId"></param>
+        Task<Basket> GetDocument(string userId, string basketId);
 
         /// <summary>
         /// Saves the current user basket.
         /// </summary>
         /// <param name="basket"></param>
         Task SaveDocument(Basket basket);
+
+        /// <summary>
+        /// Deletes the basket item.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="basketId"></param>
+        Task DeleteDocument(string userId, string basketId);
     }
 }
