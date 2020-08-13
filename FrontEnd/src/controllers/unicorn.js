@@ -51,6 +51,9 @@ let getUnicorn = ()=>{
     })
 }
 
+/**
+ * Function used to upload unicorn to inventory
+ */
 let addUnicorn = ( imgData ) => {
     let $scope = angular.element($('#page-top')).scope();
     return new Promise((resolve,reject) => {
@@ -87,6 +90,33 @@ let addUnicorn = ( imgData ) => {
                     reject()
                 }
                 
+            }
+        });
+    })
+}
+
+/**
+ * Function used to delete unicorn from the inventory
+ */
+let deleteUnicorn = ( unicorn_id ) => {
+    let $scope = angular.element($('#page-top')).scope();
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            type: "DELETE",
+            url: $scope.host + "/api/unicorn/" + unicorn_id,
+            contentType: 'application/json',
+            headers: { 'Access-Control-Allow-Origin': '*', 'Authorization': "Bearer " + $scope.idToken },
+            dataType: 'json',
+            success: function (response) {
+                console.log("Unicorn deleted!");
+                $.notify("Removed from inventory!", { className: "success", globalPosition: 'top center' });
+                $('.modal').modal('hide');
+                resolve();
+            },
+            error: function (err) {
+                console.log(err, "Error: Fail to delete unicorn");
+                $.notify("Failed to remove from inventory", { className: "error", globalPosition: 'top center' });
+                reject(err);
             }
         });
     })
