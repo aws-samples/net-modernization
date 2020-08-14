@@ -212,6 +212,17 @@ var myApp = angular.module('unicorn_app', ['ngRoute', 'ngResource']).controller(
     
     //Delete an item from the user cart
     $scope.deleteFromCart = function (basket_id) {
-        deleteBasket(basket_id)
+        deleteBasket(basket_id);
+    };
+
+    //Delete a unicorn from the inventory
+    $scope.deleteFromInventory = function (unicorn_id) {
+        deleteUnicorn(unicorn_id).then((result) => {
+            getUnicorn().catch((error) => {
+                console.log("Unicorn not fetched.")
+            });
+        }).catch((error) => {
+            console.log("Unicorn not deleted.")
+        });
     };
 });

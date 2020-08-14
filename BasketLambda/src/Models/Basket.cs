@@ -16,14 +16,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace BasketLambda
 {
@@ -40,9 +33,21 @@ namespace BasketLambda
         public string user_id { get; set; }
 
         /// <summary>
-        /// List of basket items in the current user basket.
+        /// Unique identifier for each basket item.
         /// </summary>
-        [DynamoDBProperty("items")]
-        public List<Item> Items { get; set; }
+        [DynamoDBRangeKey]
+        public string basket_id { get; set; }
+
+        /// <summary>
+        /// Unique identifier for the unicorn.
+        /// </summary>
+        [DynamoDBProperty]
+        public string unicorn_id { get; set; }
+
+        /// <summary>
+        /// Marks the availability of the item.
+        /// </summary>
+        [DynamoDBProperty]
+        public bool available { get; set; } = true;
     }
 }

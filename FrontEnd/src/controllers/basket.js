@@ -37,8 +37,17 @@ let getBasket = () => {
                 $scope.cart_prods = [];
                 if (response != null) {
                     console.log("Got the cart \n", response);
+                    var someItemDeleted = false;
                     for (var i in response) {
-                        $scope.cart_prods.push({ ...$scope.prods_key[response[i].unicorn_id], basket_id: response[i]['basket_id'] });
+                        if (response[i]['available'] != undefined && response[i]['available'] == false) {
+                            someItemDeleted = true;
+                            deleteBasket(response[i]['basket_id'], true);
+                        } else {
+                            $scope.cart_prods.push({ ...$scope.prods_key[response[i].unicorn_id], basket_id: response[i]['basket_id'], available: response[i]['available'] });
+                        }
+                    }
+                    if (someItemDeleted) {
+                        $.notify("Some unicorns in your basket are out of stock!", { className: "error", globalPosition: 'top center' });
                     }
                 }
                 $scope.cart_prods_length = $scope.cart_prods.length;
@@ -91,7 +100,7 @@ let addToBasket = ( puuid ) =>{
  * Function used to remove a product from the cart.
  * @param {uuid} basket_id - Unique identifier for the basket product to be deleted. 
  */
-let deleteBasket = ( basket_id ) => {
+let deleteBasket = ( basket_id, quiet_delete = false ) => {
     let $scope = angular.element($('#page-top')).scope()
     $.ajax({
         type: "DELETE",
@@ -99,9 +108,11 @@ let deleteBasket = ( basket_id ) => {
         headers: { 'Access-Control-Allow-Origin': '*', 'Authorization': "Bearer " + $scope.idToken},
         success: function (response) {
             console.log(response, "Removed from cart"); 
-            $.notify("Removed from cart!", { className: "success", globalPosition: 'top center' });
-            getBasket();
-            $('.modal').modal('hide');
+            if (!quiet_delete) {
+                $.notify("Removed from cart!", { className: "success", globalPosition: 'top center' });
+                getBasket();
+                $('.modal').modal('hide');
+            } 
         },
         error: function (err) {
             console.log(err, "Error: Remove from cart");

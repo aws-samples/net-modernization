@@ -16,15 +16,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Amazon.Auth.AccessControlPolicy.ActionIdentifiers;
 using Amazon.Lambda.APIGatewayEvents;
-using Amazon.Lambda.Core;
 using Amazon.Lambda.TestUtilities;
-using BasketLambda;
 using BasketLambda.Interfaces;
 using FluentAssertions;
 using Moq;

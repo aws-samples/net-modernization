@@ -25,7 +25,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>The Unicorn Shop</title>
+    <title>Unishop</title>
 
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Sacramento&display=swap" rel="stylesheet">
@@ -42,7 +42,7 @@
         <div class="container">
             <a class="navbar-brand js-scroll-trigger" href="#">
                 <img style="width:35px;color:white" src="https://cdn.pixabay.com/photo/2018/04/27/12/58/unicorn-3354612_1280.png" />
-                <span style="font-family: Sacramento;font-size:30px">The Unicorns Shop</span>
+                <span style="font-family: Sacramento;font-size:30px">The Unicorn Shop</span>
             </a>
             <button class="navbar-toggler navbar-toggler-right text-uppercase font-weight-bold bg-primary text-white rounded" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
                 Menu
@@ -308,7 +308,7 @@
 
                 <!-- Footer About Text -->
                 <div class="col-lg-4">
-                    <h4 class="text-uppercase mb-4">About Unicorns shop</h4>
+                    <h4 class="text-uppercase mb-4">About Unishop</h4>
                     <p class="lead mb-0">
 
                     </p>
@@ -321,7 +321,7 @@
     <!-- Copyright Section -->
     <section class="copyright py-4 text-center text-white">
         <div class="container">
-            <small>Copyright &copy; UniShop 2020</small>
+            <small>Copyright &copy; Unishop 2020</small>
         </div>
     </section>
 
@@ -372,9 +372,9 @@
                                     <i class="fas fa-cart-plus fa-fw"></i>
                                     Add to cart
                                 </button> &nbsp;&nbsp;
-                                <button class="btn btn-primary" href="#" data-dismiss="modal">
-                                    <i class="fas fa-times fa-fw"></i>
-                                    Close Window
+                                <button class="btn btn-primary" ng-click="deleteFromInventory(p.unicorn_id)" href="#" data-dismiss="modal">
+                                    <i class="fas fa-trash fa-fw"></i>
+                                    Delete unicorn
                                 </button>
                             </div>
                         </div>
@@ -573,12 +573,8 @@
                                                 <i class="fas fa-trash fa-fw"></i>
                                                 Remove from Cart
                                             </button> &nbsp;&nbsp;
-
-
-
                                         </div>
                                         <br>
-
                                     </div>
                                     <!-- <img class="img-fluid" src="img/portfolio/cabin.png" alt=""> -->
                                 </div>
