@@ -23,7 +23,9 @@ using System.Threading.Tasks;
 using InventoryService.Data;
 using InventoryService.Interface;
 using InventoryService.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace InventoryService.Controllers
 {
@@ -33,11 +35,13 @@ namespace InventoryService.Controllers
     {
         private readonly IUnicornService unicornService;
         private readonly IRekognitionService rekognitionService;
+        private readonly ISNSService snsService;
 
-        public UnicornController(IUnicornService unicornService, IRekognitionService rekognitionService)
+        public UnicornController(IUnicornService unicornService, IRekognitionService rekognitionService, ISNSService snsService)
         {
             this.unicornService = unicornService;
             this.rekognitionService = rekognitionService;
+            this.snsService = snsService;
         }
 
         /// <summary>
@@ -126,6 +130,21 @@ namespace InventoryService.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<Unicorn>> DeleteUnicorn(Guid id)
         {
+            var jsonMessage = JsonConvert.SerializeObject(new
+            {
+                unicorn_id = id,
+                available = false,
+            });
+
+            try
+            {
+                await this.snsService.PublishMessageToSNSAsync(jsonMessage);
+            }
+            catch (Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
             var unicorn = await this.unicornService.FindUnicornDeleteAsync(id);
 
             if (unicorn == null)

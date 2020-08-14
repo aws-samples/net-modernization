@@ -41,6 +41,7 @@ namespace InventoryService.Tests
         private UnicornController unicornController;
         private Mock<IUnicornService> fakeUnicornService;
         private Mock<IRekognitionService> fakeRekognitionService;
+        private Mock<ISNSService> fakeSNSService;
         private byte[] fakeImageBytes1;
         private byte[] fakeImageBytes2;
 
@@ -49,6 +50,7 @@ namespace InventoryService.Tests
         {
             this.GivenUnicornService();
             this.GivenRekognitionService();
+            this.GivenSNSService();
             this.GivenUnicornController();
             var unicorns = this.unicornController.GetUnicorns().Result;
             unicorns.Value.Should().BeOfType<List<Unicorn>>("because are fetching unicorns.");
@@ -59,6 +61,7 @@ namespace InventoryService.Tests
         {
             this.GivenUnicornService();
             this.GivenRekognitionService();
+            this.GivenSNSService();
             this.GivenUnicornController();
             var unicorn = this.unicornController.GetUnicorn(Guid.NewGuid()).Result;
             unicorn.Value.Should().BeOfType<Unicorn>("we are getting a unicorn object");
@@ -69,6 +72,7 @@ namespace InventoryService.Tests
         {
             this.GivenUnicornService();
             this.GivenRekognitionService();
+            this.GivenSNSService();
             this.GivenUnicornController();
             var unicorn = new Unicorn { unicorn_id = Guid.NewGuid() };
             var result = this.unicornController.UpdateUnicorn(unicorn.unicorn_id, unicorn).Result;
@@ -81,6 +85,7 @@ namespace InventoryService.Tests
         {
             this.GivenUnicornService();
             this.GivenRekognitionService();
+            this.GivenSNSService();
             this.GivenUnicornController();
             var unicorn = new Unicorn { unicorn_id = Guid.NewGuid() };
             var result = this.unicornController.UpdateUnicorn(Guid.NewGuid(), unicorn).Result;
@@ -93,6 +98,7 @@ namespace InventoryService.Tests
         {
             this.GivenUnicornService();
             this.GivenRekognitionService();
+            this.GivenSNSService();
             this.GivenUnicornController();
             var unicorn = new Unicorn { unicorn_id = Guid.NewGuid() };
             var uploadItem = new NewUploadedItem { Unicorn = unicorn, Image = this.fakeImageBytes1 };
@@ -106,6 +112,7 @@ namespace InventoryService.Tests
         {
             this.GivenUnicornService();
             this.GivenRekognitionService();
+            this.GivenSNSService();
             this.GivenUnicornController();
             var unicorn = new Unicorn { unicorn_id = Guid.NewGuid() };
             var uploadItem = new NewUploadedItem { Unicorn = unicorn, Image = this.fakeImageBytes2 };
@@ -118,6 +125,7 @@ namespace InventoryService.Tests
         {
             this.GivenUnicornService();
             this.GivenRekognitionService();
+            this.GivenSNSService();
             this.GivenUnicornController();
             var unicorn = this.unicornController.DeleteUnicorn(Guid.NewGuid()).Result;
             unicorn.Value.Should().NotBeNull("because we have the Unicorn in Db")
@@ -143,9 +151,15 @@ namespace InventoryService.Tests
             this.fakeRekognitionService.Setup(m => m.GetContentModerationLabels(It.Is<byte[]>(uploadImage => uploadImage == this.fakeImageBytes2))).Returns(Task.FromResult(string.Empty));
         }
 
+        private void GivenSNSService()
+        {
+            this.fakeSNSService = new Mock<ISNSService>();
+            this.fakeSNSService.Setup(m => m.PublishMessageToSNSAsync(It.IsAny<string>())).Returns(Task.FromResult(false));
+        }
+
         private void GivenUnicornController()
         {
-            this.unicornController = new UnicornController(this.fakeUnicornService.Object, this.fakeRekognitionService.Object);
+            this.unicornController = new UnicornController(this.fakeUnicornService.Object, this.fakeRekognitionService.Object, this.fakeSNSService.Object);
         }
     }
 }
