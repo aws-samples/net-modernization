@@ -67,6 +67,8 @@ namespace InventoryService
 
             services.AddTransient<IS3UnicornRepository, S3UnicornRepository>();
 
+            services.AddTransient<ISNSService, SNSService>();
+
             // Using in-memory database for EKS lab demo.
             if (Environment.GetEnvironmentVariable(OrchestrationEnvironmentVariableName) == "EKS")
             {
