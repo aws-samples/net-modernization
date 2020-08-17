@@ -34,14 +34,14 @@ The Locust directory contains the source code and files necessary to use the [Lo
 The InventoryService directory contains the source code used for the containerization of the Unishop inventory service. 
 
 ### Launch Your Own Workshop
-We prepared AWS accounts for you to use, but you can also go through this workshop in your own AWS account. If you want to do this, please download [this CloudFormation template](https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) and deploy it in your own AWS account. The workshop is currently only supported in the following regions: us-east-1, us-west-2, eu-west-1, and ap-southeast-1. You can also launch this CloudFormation stack, using your account, with the links below:
+We prepared AWS accounts for you to use, but you can also go through this workshop in your own AWS account. If you want to do this, please download [this CloudFormation template](https://unishop-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) and deploy it in your own AWS account. The workshop is currently only supported in the following regions: us-east-1, us-west-2, eu-west-1, and ap-southeast-1. You can also launch this CloudFormation stack, using your account, with the links below:
 
 | AWS Region Code            | Name                     | Launch |
 | --- | --- | --- 
-| us-east-1 |US East (N. Virginia)|[Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
-| us-west-2 |US West (Oregon)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
-| eu-west-1 |EU (Ireland)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
-| ap-southeast-1 |AP (Singapore)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
+| us-east-1 |US East (N. Virginia)|[Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unishop-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
+| us-west-2 |US West (Oregon)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unishop-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
+| eu-west-1 |EU (Ireland)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unishop-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
+| ap-southeast-1 |AP (Singapore)| [Launch Stack](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=UnicornWorkshopMain&templateURL=https://unishop-dotnet.s3.us-east-2.amazonaws.com/Workshop-CFN.yml) |
 
 ### Security
 
