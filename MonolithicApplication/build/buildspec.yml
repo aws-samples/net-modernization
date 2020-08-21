@@ -11,19 +11,20 @@ phases:
       - '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Install-Module -Name AWS.Tools.S3 -Force'
   build:
     commands:
-      - cd $CODEBUILD_SRC_DIR\MonolithicApplication\src\
+      - cd MonolithicApplication
       - nuget restore
+      - cd src
       - msbuild $env:PROJECT.csproj /p:TargetFrameworkVersion=v$env:DOTNET_FRAMEWORK /p:Configuration=Release /p:DeployIisAppPath="Default Web Site" /p:PackageAsSingleFile=false /p:OutDir=C:\codebuild\artifacts\ /t:Package
   post_build:
      commands:
       - New-Item -Path "C:\" -Name "Archive" -ItemType "directory"
       - cd C:\Archive
-      - 'Set-ItemProperty "HKLM:\System\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -value 1; Compress-Archive -Path \\?\C:\codebuild\artifacts\_PublishedWebsites\${env:PROJECT}_Package\Archive\* -DestinationPath C:\Archive\UnicornLegacy.zip'      
-      - Write-S3Object -BucketName unicorn-store-dotnet -File ".\UnicornLegacy.zip" -Region us-east-2 -PublicReadOnly
-      - Write-S3Object -BucketName unicorn-store-dotnet-us-west-1 -File ".\UnicornLegacy.zip" -Region us-west-2 -PublicReadOnly
-      - Write-S3Object -BucketName unicorn-store-dotnet-us-east-1 -File ".\UnicornLegacy.zip" -Region us-east-1 -PublicReadOnly
-      - Write-S3Object -BucketName unicorn-store-dotnet-eu-west-1 -File ".\UnicornLegacy.zip" -Region eu-west-1 -PublicReadOnly
-      - Write-S3Object -BucketName unicorn-store-dotnet-ap-southeast-1 -File ".\UnicornLegacy.zip" -Region ap-southeast-1 -PublicReadOnly
+      - 'Set-ItemProperty "HKLM:\System\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -value 1; Compress-Archive -Path \\?\C:\codebuild\artifacts\_PublishedWebsites\${env:PROJECT}_Package\Archive\* -DestinationPath C:\Archive\UnishopLegacy.zip'
+      - Write-S3Object -BucketName $S3_BUCKET_NAME -File ".\UnishopLegacy.zip" -Region $MAIN_REGION -PublicReadOnly
+      - Write-S3Object -BucketName $S3_BUCKET_NAME-$OTHER_REGION_1 -File ".\UnishopLegacy.zip" -Region $OTHER_REGION_1 -PublicReadOnly
+      - Write-S3Object -BucketName $S3_BUCKET_NAME-$OTHER_REGION_2 -File ".\UnishopLegacy.zip" -Region $OTHER_REGION_2 -PublicReadOnly
+      - Write-S3Object -BucketName $S3_BUCKET_NAME-$OTHER_REGION_3 -File ".\UnishopLegacy.zip" -Region $OTHER_REGION_3 -PublicReadOnly
+      - Write-S3Object -BucketName $S3_BUCKET_NAME-$OTHER_REGION_4 -File ".\UnishopLegacy.zip" -Region $OTHER_REGION_4 -PublicReadOnly
 
 artifacts:
   files:

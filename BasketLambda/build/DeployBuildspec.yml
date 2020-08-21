@@ -7,4 +7,4 @@ phases:
   build:
     commands:
       - cd $CODEBUILD_SRC_DIR/BasketLambda/src/
-      - dotnet lambda deploy-function
+      - dotnet lambda deploy-function --function-role $LAMBDA_DEPLOY_ARN --region $MAIN_REGION

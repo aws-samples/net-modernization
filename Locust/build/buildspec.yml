@@ -8,12 +8,12 @@ phases:
   post_build:
     commands:
       - mkdir $CODEBUILD_SRC_DIR/Locust/artifacts/
-      - zip $CODEBUILD_SRC_DIR/Locust/artifacts/locusttest.zip Dockerfile Dockerrun.aws.json locustfile.py 
-      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet/ --acl public-read --recursive
-      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet-us-west-2/ --acl public-read --recursive
-      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet-us-east-1/ --acl public-read --recursive
-      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet-eu-west-1/ --acl public-read --recursive  
-      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://unicorn-store-dotnet-ap-southeast-1/ --acl public-read --recursive 
+      - zip $CODEBUILD_SRC_DIR/Locust/artifacts/locusttest.zip Dockerfile Dockerrun.aws.json locustfile.py
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://$S3_BUCKET_NAME/ --acl public-read --recursive
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://$S3_BUCKET_NAME-$OTHER_REGION_1/ --acl public-read --recursive
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://$S3_BUCKET_NAME-$OTHER_REGION_2/ --acl public-read --recursive
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://$S3_BUCKET_NAME-$OTHER_REGION_3/ --acl public-read --recursive
+      - aws s3 cp $CODEBUILD_SRC_DIR/Locust/artifacts/. s3://$S3_BUCKET_NAME-$OTHER_REGION_4/ --acl public-read --recursive
 artifacts:
   files:
     - '**/*'

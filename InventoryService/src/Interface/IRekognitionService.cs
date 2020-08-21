@@ -31,6 +31,6 @@ namespace InventoryService.Interface
         /// </summary>
         /// <param name="userUpload">Byte array representation of image uploaded by user </param>
         /// <returns> The inappropiate content labels identified by AWS Rekognition</returns>
-        Task<string> GetContentModerationLabels(byte[] userUpload);
+        string GetContentModerationLabels(byte[] userUpload);
     }
 }

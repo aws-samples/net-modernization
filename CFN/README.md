@@ -12,6 +12,6 @@ This folder contains the CloudFormation templates that will provision resources 
 ## Modernization-Resources-CFN.yml
    This template defines most resources you need for the workshop. It is one of templates referred by the Workshop-CFN.yml. This template cannot be run seperately, since it is dependent on other templates which are not provided in this repository. To provision resources you need for the workshop, please build up a CloudFormation template using Workshop-CFN.yml.
 
-## Modernization-CodePipeline-CFN.yml
-   This template is for internal use. Workshop participants can ignore it.
+## Dev folder
+   This folder is for internal use. Workshop participants can ignore it.
 

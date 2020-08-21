@@ -1,25 +1,9 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: MIT-0
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy of this
-# software and associated documentation files (the "Software"), to deal in the Software
-# without restriction, including without limitation the rights to use, copy, modify,
-# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 # This template is used to create the resources required for the AML .NET Modernization workshop.
 # The template can be executed standalone by providing network configurations or can be run as a nested template using the Event Engine driver template.
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: .NET modernization workshop template. Creates resources required for the AML Unishop Workshop.
+Description: .NET modernization workshop template. Creates resources required for the AML Unicorn Workshop.
 
 Metadata:
   AWS::CloudFormation::Interface: 
@@ -29,7 +13,6 @@ Metadata:
         Parameters: 
           - "VPCId"
           - "SubnetIdList"
-          - "VSSecurityGroupId"
 
       - Label:
           default: "MSSQL Instance configurations."
@@ -39,28 +22,15 @@ Metadata:
           - "MasterUserPassword"
 
       - Label:
-          default: "Aurora Instance configurations."
-        Parameters:
-          - "AuroraDbName"
-          - "AuroraUsername"
-          - "AuroraPassword"
-          - "AuroraDbClusterName"
-          - "AuroraDbInstanceName1"
-
-      - Label:
           default: "Elastic Beanstalk configurations."
         Parameters:
           - "ApplicationName"
-          - "SourceS3Bucket"
-          - "SourceS3BucketKey"
           - "EnvironmentName"
 
       - Label:
           default: "Elastic Beanstalk Locust App configurations."
         Parameters:
           - "LocustApplicationName"
-          - "LocustSourceS3Bucket"
-          - "LocustSourceS3BucketKey"
           - "LocustEnvironmentName"
 
       - Label:
@@ -97,16 +67,6 @@ Parameters:
     Description: "Elastic Beanstalk Application Name"
     Default: "LegacyApplication"
 
-  SourceS3Bucket:
-    Type: String
-    Description: "Bucket name of the application code"
-    Default: "unishop-dotnet"
-
-  SourceS3BucketKey:
-    Type: String
-    Description: "Object key of the application source code"
-    Default: "UnishopLegacy.zip"
-
   EnvironmentName:
     Type: String
     Description: "Elastic Beanstalk Environment name"
@@ -116,16 +76,6 @@ Parameters:
     Type: String
     Description: "Elastic Beanstalk Application Name"
     Default: "LoadGenerator"
-
-  LocustSourceS3Bucket:
-    Type: String
-    Description: "Bucket name of the application code"
-    Default: "unishop-dotnet"
-
-  LocustSourceS3BucketKey:
-    Type: String
-    Description: "Object key of the application source code"
-    Default: "locusttest.zip"
 
   LocustEnvironmentName:
     Type: String
@@ -139,32 +89,7 @@ Parameters:
     Default: "UnishopCluster"
 
   # -----------------------------------
-  AuroraUsername:
-    Description: Username for Aurora DB
-    Type: String
-    Default: postgres
-  
-  AuroraPassword:
-    NoEcho: True
-    Description: UserPassword for Aurora DB
-    Type: String
-    Default: mYRyeT1IJamnWxAYowyR
-
-  AuroraDbClusterName:
-    Description: Name of the Aurora Cluster
-    Type: String
-    Default: inventorydb
-
-  AuroraDbInstanceName1:
-    Description: Name of the primary Aurora database instance
-    Type: String
-    Default: instance1
-  
-  AuroraDbName:
-    Description: Name of the database in Aurora Cluster
-    Type: String
-    Default: inventorydb
-
+ 
   # -----------------------------------
   HostedZone:
     Type: String
@@ -180,11 +105,6 @@ Parameters:
   SubnetIdList:
     Type: CommaDelimitedList
     Description: "Subnet Id to deploy the instance"
-    Default: ""
-
-  VSSecurityGroupId:
-    Type: String
-    Description: "The Security Group of the EC2 Dev Instance"
     Default: ""
 
   # -----------------------------------
@@ -266,16 +186,6 @@ Resources:
       ApplicationName: !Ref ApplicationName
       Description: "AWS Elastic Beanstalk Legacy .NET Framework application"
   
-  # Elastic Beanstalk Application version. Source code pulled from S3 bucket.
-  EBAppVersion:
-    Type: AWS::ElasticBeanstalk::ApplicationVersion
-    Properties: 
-      ApplicationName: 
-        Ref: "EBApp"
-      Description: "AWS Elastic Beanstalk Legacy .NET Framework application version"
-      SourceBundle: 
-        S3Bucket: !Join [ '-', [!Ref SourceS3Bucket, !Ref 'AWS::Region']]
-        S3Key: !Ref SourceS3BucketKey
   
   # Elastic Beanstalk Application config template. Specifies the platform.
   EBConfig:
@@ -324,8 +234,8 @@ Resources:
       Tier: 
         Name: "WebServer"
         Type: "Standard"
-      VersionLabel: 
-        Ref : "EBAppVersion"
+      #VersionLabel: 
+        #Ref : "EBAppVersion"
 
   # Deploy Locust load testing application in Amazon Linux instance with Docker support.
   # Elastic Beanstalk Application.
@@ -335,17 +245,7 @@ Resources:
       ApplicationName: !Ref LocustApplicationName
       Description: "AWS Elastic Beanstalk Docker Locust application"
   
-  # Elastic Beanstalk Application version. Source code pulled from S3 bucket.
-  EBLocustAppVersion:
-    Type: AWS::ElasticBeanstalk::ApplicationVersion
-    Properties: 
-      ApplicationName: 
-        Ref: "EBLocustApp"
-      Description: "AWS Elastic Beanstalk Docker Locust application version"
-      SourceBundle: 
-        S3Bucket: !Join [ '-', [!Ref LocustSourceS3Bucket, !Ref 'AWS::Region']]
-        S3Key: !Ref LocustSourceS3BucketKey
-  
+
   # Elastic Beanstalk Application config template. Specifies the platform.
   EBLocustConfig:
     Type: AWS::ElasticBeanstalk::ConfigurationTemplate
@@ -387,8 +287,8 @@ Resources:
       Tier: 
         Name: "WebServer"
         Type: "Standard"
-      VersionLabel: 
-        Ref : "EBLocustAppVersion"
+      #VersionLabel: 
+        #Ref : "EBLocustAppVersion"
 
 
   # Database resources.
@@ -396,8 +296,6 @@ Resources:
   # MSSQL Database security group. Allow connections from the Monolithic application, VS Dev instance and DMS resources.
   MSSQLVPCSecurityGroup:
     Type: AWS::EC2::SecurityGroup
-    DependsOn: 
-      - DMSSecurityGroup
     Properties:
       GroupDescription: "Security Group to allow applications to connect to RDS Instance"
       SecurityGroupIngress:
@@ -405,14 +303,6 @@ Resources:
           FromPort: 1433
           ToPort: 1433
           SourceSecurityGroupId: !GetAtt EBSecurityGroup.GroupId
-        - IpProtocol: 'tcp'
-          FromPort: 1433
-          ToPort: 1433
-          SourceSecurityGroupId: !Ref VSSecurityGroupId
-        - IpProtocol: 'tcp'
-          FromPort: 1433
-          ToPort: 1433
-          SourceSecurityGroupId: !GetAtt DMSSecurityGroup.GroupId
         - IpProtocol: 'tcp'
           FromPort: 1433
           ToPort: 1433
@@ -427,7 +317,7 @@ Resources:
     Type: 'AWS::RDS::DBSubnetGroup'
     Properties:
       DBSubnetGroupDescription: "DB Subnet Group to create RDS in a VPC"
-      DBSubnetGroupName: "UnishopSubnetGroup"
+      DBSubnetGroupName: "UnishopRDSSubnetGroup"
       SubnetIds: !Ref SubnetIdList
 
   # MSSQL Database. SQL Express server hosted in the specified subnet.
@@ -442,68 +332,10 @@ Resources:
       LicenseModel: license-included
       MasterUsername: !Ref MasterUsername
       MasterUserPassword: !Ref MasterUserPassword
+      PubliclyAccessible: true
       DBSubnetGroupName: !Ref MSSQLDBSubnet
       VPCSecurityGroups:
         - !GetAtt MSSQLVPCSecurityGroup.GroupId
-
-  # RDS Aurora database to store inventory information after database migration and service stragling.
-  # Aurora security group. Allow connections from the ECS, VS Dev instance and DMS resources.
-  AuroraSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    DependsOn:
-      - DMSSecurityGroup
-    Properties:
-      GroupDescription: "Security Group to allow applications in ECS and VS dev machine to connect to Aurora Database"
-      SecurityGroupIngress:
-        - IpProtocol: 'tcp'
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !Ref ECSContainerSecurityGroup
-        - IpProtocol: 'tcp'
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !Ref VSSecurityGroupId
-        - IpProtocol: 'tcp'
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !GetAtt DMSSecurityGroup.GroupId
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: '0.0.0.0/0'
-      VpcId: !Ref VpcId
-  
-  # Aurora Database subnet.
-  AuroraSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: CloudFormation managed Aurora DB subnet group.
-      SubnetIds: !Ref SubnetIdList
-
-  # Aurora database cluster configuration.
-  AuroraCluster:
-    Type: AWS::RDS::DBCluster
-    Properties:
-      Engine: aurora-postgresql
-      EngineVersion: '11.6'
-      DBClusterIdentifier: !Ref AuroraDbClusterName
-      DatabaseName: !Ref AuroraDbName
-      DBClusterParameterGroupName: default.aurora-postgresql11
-      MasterUsername: !Ref AuroraUsername
-      MasterUserPassword: !Ref AuroraPassword
-      Port: 5432
-      DBSubnetGroupName: !Ref AuroraSubnetGroup
-      VpcSecurityGroupIds: [!Ref AuroraSecurityGroup]
-
-  # Aurora databse instance. Hosts a postgresql server.
-  AuroraDatabasePrimaryInstance:
-    Type: AWS::RDS::DBInstance
-    DependsOn: [AuroraSubnetGroup, AuroraCluster]
-    Properties:
-      Engine: aurora-postgresql
-      DBClusterIdentifier: !Ref AuroraCluster
-      DBInstanceIdentifier: !Ref AuroraDbInstanceName1
-      DBInstanceClass: db.t3.medium
-      DBSubnetGroupName: !Ref AuroraSubnetGroup
 
   # Container resources. 
   # These include resources that are required to deploy and run containers on Amazon ECS.
@@ -550,12 +382,10 @@ Resources:
           Principal:
             Service: 
               - "ecs-tasks.amazonaws.com"
+              - "rekognition.amazonaws.com"
+              - "s3.amazonaws.com"
           Action: 
             - "sts:AssumeRole"
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonSNSFullAccess'
-        - 'arn:aws:iam::aws:policy/AmazonRekognitionFullAccess'
-        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
 
   # Security group for ECS tasks/service.
   ECSContainerSecurityGroup:
@@ -569,100 +399,7 @@ Resources:
   # DMS related resources.
   # Database migration is done from MS SQL to Aurora postgressql server.
   # IAM role to provide permissions for DMS.
-  DMSVPCRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: 'dms-vpc-role'
-      ManagedPolicyArns: 
-        - 'arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole'
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: 
-              - "dms.amazonaws.com"
-          Action: 
-            - "sts:AssumeRole"
-      Path: /
-
-  # IAM role to allow logging with cloudwatch.
-  DMSCloudWatchRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: 'dms-cloudwatch-logs-role'
-      ManagedPolicyArns: 
-        - 'arn:aws:iam::aws:policy/service-role/AmazonDMSCloudWatchLogsRole'
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: 
-              - "dms.amazonaws.com"
-          Action: 
-            - "sts:AssumeRole"
-      Path: /
-
-  # Security group for DMS instance.
-  DMSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "Security Group to allow access to DMS instance"
-      GroupName: "DMS Replication Instance Security Group"
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: '0.0.0.0/0'
-      VpcId: !Ref VpcId
-
-  # Ingress security group for DMS.
-  DMSSGSelfIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !Ref DMSSecurityGroup
-      IpProtocol: -1
-      SourceSecurityGroupId: !Ref DMSSecurityGroup
-
-  # DMS replication instance to perform migrations.
-  DMSReplicationInstance:
-    DependsOn: 
-      - DMSVPCRole
-    Type: AWS::DMS::ReplicationInstance
-    Properties:
-      ReplicationInstanceClass: dms.t2.micro
-      AllocatedStorage: 5
-      AllowMajorVersionUpgrade: false
-      PubliclyAccessible: false
-      ReplicationInstanceIdentifier: unishop-replication-instance
-      VpcSecurityGroupIds: [!Ref DMSSecurityGroup]
-
-  # DMS source endpoint. Set to the MSSQL database.
-  SourceEndpoint:
-    Type: AWS::DMS::Endpoint
-    Properties:
-      EndpointType: source
-      EngineName: sqlserver
-      DatabaseName: Unishop
-      EndpointIdentifier: unishop-legacy-mssql-endpoint
-      Password: !Ref MasterUserPassword
-      Port: !GetAtt MSSQLDatabaseInstance.Endpoint.Port
-      ServerName: !GetAtt MSSQLDatabaseInstance.Endpoint.Address
-      SslMode: none
-      Username: !Ref MasterUsername
-
-  # DMS target end point. Set to the Aurora database.
-  TargetEndpoint:
-    Type: AWS::DMS::Endpoint
-    Properties:
-      EndpointType: target
-      EngineName: aurora-postgresql
-      DatabaseName: !Ref AuroraDbName
-      EndpointIdentifier: unishop-inventory-postgres-endpoint
-      Password: !Ref AuroraPassword
-      Port: !GetAtt AuroraDatabasePrimaryInstance.Endpoint.Port
-      ServerName: !GetAtt AuroraDatabasePrimaryInstance.Endpoint.Address
-      SslMode: none
-      Username: !Ref AuroraUsername
+  
 
   # Lambda function resources.
   # IAM Role for Lambda function DynamoDB acess
@@ -679,35 +416,33 @@ Resources:
               - lambda.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess'
-      # Path: /
-      # Policies:
-      #   - PolicyName: FullAccessToDDB
-      #     PolicyDocument:
-      #       Version: 2012-10-17
-      #       Statement:
-      #         - Effect: Allow
-      #           Action:
-      #             - "dynamodb:List*"
-      #             - "dynamodb:DescribeReservedCapacity*"
-      #             - "dynamodb:DescribeLimits"
-      #             - "dynamodb:DescribeTimeToLive"
-      #           Resource: '*'
-      #         - Effect: Allow
-      #           Action:
-      #             - "dynamodb:BatchGet*"
-      #             - "dynamodb:DescribeStream"
-      #             - "dynamodb:DescribeTable"
-      #             - "dynamodb:Get*"
-      #             - "dynamodb:Query"
-      #             - "dynamodb:Scan"
-      #             - "dynamodb:BatchWrite*"
-      #             - "dynamodb:CreateTable"
-      #             - "dynamodb:Delete*"
-      #             - "dynamodb:Update*"
-      #             - "dynamodb:PutItem"
-      #           Resource: "arn:aws:dynamodb:*:*:table/UnicornBasket"
+      Path: /
+      Policies:
+        - PolicyName: FullAccessToDDB
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:List*"
+                  - "dynamodb:DescribeReservedCapacity*"
+                  - "dynamodb:DescribeLimits"
+                  - "dynamodb:DescribeTimeToLive"
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - "dynamodb:BatchGet*"
+                  - "dynamodb:DescribeStream"
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:Get*"
+                  - "dynamodb:Query"
+                  - "dynamodb:Scan"
+                  - "dynamodb:BatchWrite*"
+                  - "dynamodb:CreateTable"
+                  - "dynamodb:Delete*"
+                  - "dynamodb:Update*"
+                  - "dynamodb:PutItem"
+                Resource: "arn:aws:dynamodb:*:*:table/UnicornBasket"
 
   # Route 53 hosted zone.
   # A hosted zone to map a DNS with the created resource endpoints.
@@ -753,7 +488,7 @@ Resources:
       - MSSQLDatabaseInstance
     Properties:
       HostedZoneId: !Ref AppHostedZone
-      Comment: "DNS for RDS MSSQL service"
+      Comment: "DNS for locust load testing service"
       Name: !Join [ '.',['db', !Ref HostedZone ]]
       Type: CNAME
       TTL: '900'
@@ -778,3 +513,27 @@ Resources:
         BlockPublicAcls: false
         BlockPublicPolicy: true
         RestrictPublicBuckets: true
+
+Outputs:
+  EBLegacyEnvironmentName:
+    Description: "Environment name of EB that hosts the legacy app."
+    Value: !Ref EBEnvironment
+  EBLegacyApplicationName:
+    Description: "Application name of EB that hosts the legacy app."
+    Value: !Ref EBApp
+  EBLocustEnvironmentName:
+    Description: "Environment name of EB that hosts locust."
+    Value: !Ref EBLocustEnvironment
+  EBLocustApplicationName:
+    Description: "Application name of EB that hosts locust."
+    Value: !Ref EBLocustApp
+  ECSClusterName:
+    Description: "Name of the ECS cluster hosting inventory service."
+    Value: !Ref ECSCluster
+  DynamoDBAccessRoleARN: 
+    Description: "The arn of the dynamodb-access-modernization-workshop-role."
+    Value: !GetAtt DynamoDBAccessRole.Arn
+  UnishopFrontendBucket:
+    Description: "The name of the UnishopFrontEnd Bucket"
+    Value: !Ref StaticHostingBucket
+
