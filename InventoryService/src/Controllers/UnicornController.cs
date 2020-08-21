@@ -49,7 +49,7 @@ namespace InventoryService.Controllers
         /// </summary>
         /// <returns> List of Unicorn entities. </returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Unicorn>>> GetUnicorns()
+        public ActionResult<IEnumerable<Unicorn>> GetUnicorns()
         {
             return this.unicornService.GetUnicorns();
         }
@@ -106,7 +106,7 @@ namespace InventoryService.Controllers
         {
             // Uncomment the code below for the AI Content Moderation extra credit lab
             /*
-            var rekognitionResponse = await this.rekognitionService.GetContentModerationLabels(upload.Image);
+            var rekognitionResponse = this.rekognitionService.GetContentModerationLabels(upload.Image);
             if (rekognitionResponse != null)
             {
                 return this.BadRequest(rekognitionResponse);

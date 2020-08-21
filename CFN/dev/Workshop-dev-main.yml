@@ -1,0 +1,107 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify,
+# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# This template is a EE driver template for AML Unicorn Workshop Environment creation.
+# It checks condition on parameter UseDefaultVPC
+# If - true, Triggers a nested template to create a Lambda function to fetch Default VPC, Subnets and Security group Id for the current user.
+# If - false, Triggers a nested template that creates a new custom VPC, Subnets etc and outputs the Ids.
+# Nested template to create the Windows EC2 resource is triggered with VPC info as input. 
+# Nested template to create workshop specific resources is triggered with VPC and EC2 Security group as input.
+
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Event Engine Driver template. Triggers nested stacks to create resources based on conditions.
+
+Parameters:
+
+  ResourceTemplateURL:
+    Type: String
+    Description: The URL to load the nested stack templates. The default value points to the latest released version of the templates.
+    Default: "https://windows-dev-env-ec2.s3.us-west-2.amazonaws.com/cfn/latest" #To be replaced with the external S3
+
+  UseDefaultVPC:
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Conditional parameter to use default VPC or create new one.
+    Default: "true"
+
+  CICDS3BucketName:
+    Type: String
+    Description: S3 bucket name for Codepipeline use
+    Default: "unishop-dotnet"
+
+  AppSourceRepoName:
+    Type: String
+    Description: Name of the application source codecommit SourceRepoName
+    Default: net-modernization-internal
+
+  HugoSourceRepoName:
+    Type: String
+    Description: Name of the Hugo site source codecommit SourceRepoName
+    Default: net-modernization-hugo
+
+
+Conditions:
+  IsUseDefaultVPC: !Equals [!Ref UseDefaultVPC,"true"]
+
+Resources:
+
+  #Create S3 buckets for CI/CD
+  S3Resources:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join ["/",["https://unishop-dotnet.s3.us-east-2.amazonaws.com/CFN-Templates-for-Developers/", "Dev-S3Buckets.yml"]]
+      Parameters:
+        S3BucketName: !Ref CICDS3BucketName
+
+  #VPC resource creation
+  VPCResourceStack: 
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !If [IsUseDefaultVPC, !Join ["/",[!Ref ResourceTemplateURL, "Default-VPC-Dev-Env-CFN.yml"]], !Join ["/",[!Ref ResourceTemplateURL, "Custom-VPC-Dev-Env-CFN.yml"]]]
+
+  #Create resources for Unicorn Workshop
+  UnicornWorkshopStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join ["/",["https://unishop-dotnet.s3.us-east-2.amazonaws.com/CFN-Templates-for-Developers/", "Dev-Resources.yml"]]
+      Parameters:
+        VpcId: !GetAtt VPCResourceStack.Outputs.VpcId
+        SubnetIdList: !GetAtt VPCResourceStack.Outputs.Subnets
+
+  #Create pipelines for workshop app and services
+  UnicornPipelineStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: UnicornWorkshopStack
+    Properties:
+      TemplateURL: !Join ["/",["https://unishop-dotnet.s3.us-east-2.amazonaws.com/CFN-Templates-for-Developers/", "Dev-CodePipeline.yml"]]
+      Parameters:
+        S3BucketName: !Ref CICDS3BucketName
+        LegacyEBApplicationName: !GetAtt UnicornWorkshopStack.Outputs.EBLegacyApplicationName
+        LegacyEBEnvironmentName: !GetAtt UnicornWorkshopStack.Outputs.EBLegacyEnvironmentName
+        LocustEBApplicationName: !GetAtt UnicornWorkshopStack.Outputs.EBLocustApplicationName
+        LocustEBEnvironmentName: !GetAtt UnicornWorkshopStack.Outputs.EBLocustEnvironmentName
+        LambdaDeployAccessRoleARN: !GetAtt UnicornWorkshopStack.Outputs.DynamoDBAccessRoleARN
+        HugoSourceRepo: !Ref HugoSourceRepoName
+        InventorySourceRepo: !Ref AppSourceRepoName
+        LegacySourceRepo: !Ref AppSourceRepoName
+        BasketSourceRepo: !Ref AppSourceRepoName
+        LocustSourceRepo: !Ref AppSourceRepoName
+        FrontendSourceRepo: !Ref AppSourceRepoName
+        FrontendBucketName: !GetAtt UnicornWorkshopStack.Outputs.UnishopFrontendBucket

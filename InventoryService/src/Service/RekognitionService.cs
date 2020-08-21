@@ -32,7 +32,7 @@ namespace InventoryService.Service
     public class RekognitionService : IRekognitionService
     {
         /// <inheritdoc />
-        public async Task<string> GetContentModerationLabels(byte[] userUpload)
+        public string GetContentModerationLabels(byte[] userUpload)
         {
             // Uncomment the code below for the AI Content Moderation extra credit lab
             /*
@@ -46,7 +46,7 @@ namespace InventoryService.Service
                 MinConfidence = 70F,
             };
 
-            DetectModerationLabelsResponse detectModerationLabelsResponse = await rekognitionClient.DetectModerationLabelsAsync(detectModerationLabelsRequest);
+            DetectModerationLabelsResponse detectModerationLabelsResponse = rekognitionClient.DetectModerationLabelsAsync(detectModerationLabelsRequest).GetAwaiter().GetResult();
             if (detectModerationLabelsResponse.ModerationLabels.Count > 0)
             {
                 return detectModerationLabelsResponse.ModerationLabels[0].Name;

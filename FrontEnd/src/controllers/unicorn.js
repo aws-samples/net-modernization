@@ -116,7 +116,7 @@ let deleteUnicorn = ( unicorn_id ) => {
             error: function (err) {
                 console.log(err, "Error: Fail to delete unicorn");
                 $.notify("Failed to remove from inventory", { className: "error", globalPosition: 'top center' });
-                reject(err);
+                reject();
             }
         });
     })

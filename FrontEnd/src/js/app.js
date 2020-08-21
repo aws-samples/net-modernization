@@ -221,8 +221,6 @@ var myApp = angular.module('unicorn_app', ['ngRoute', 'ngResource']).controller(
             getUnicorn().catch((error) => {
                 console.log("Unicorn not fetched.")
             });
-        }).catch((error) => {
-            console.log("Unicorn not deleted.")
         });
     };
 });

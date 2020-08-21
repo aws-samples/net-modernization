@@ -40,40 +40,35 @@ Parameters:
         - 'false'
       Description: Conditional parameter to use default VPC or create new one.
       Default: "true"
-  
-  WorkshopNameTagValue:
-      Type: String
-      Description: Tag for the EC2 Dev Instance
-      Default: "WindowsDevEC2Stack - Unicorn"
 
 Conditions:
     IsUseDefaultVPC: !Equals [!Ref UseDefaultVPC,"true"]
 
 Resources:
 
-  #VPC resource creation
+  # VPC resource creation
   VPCResourceStack: 
     Type: AWS::CloudFormation::Stack
     Properties: 
       TemplateURL: !If [IsUseDefaultVPC, !Join ["/",[!Ref ResourceTemplateURL, "Default-VPC-Dev-Env-CFN.yml"]], !Join ["/",[!Ref ResourceTemplateURL, "Custom-VPC-Dev-Env-CFN.yml"]]]
 
-  #Devloper desktop for workshop
+  # Developer desktop for workshop
   WindowsDevEC2Stack: 
     Type: AWS::CloudFormation::Stack
     Properties: 
       TemplateURL: !Join ["/",[!Ref ResourceTemplateURL, "Windows-Dev-Env-EC2-CFN.yaml"]]
       Parameters:
-        WorkshopNameTagValue: !Ref WorkshopNameTagValue
+        WorkshopNameTagValue: 'Developer Desktop'
         VpcId: !GetAtt VPCResourceStack.Outputs.VpcId
         SubnetId: !Select [0, !Split [',',!GetAtt VPCResourceStack.Outputs.Subnets]]
         StartDockerDaemonEC2: 'True'
-        SampleAppGitRepoUrl	: "https://github.com/aws-samples/net-modernization.git"
+        SampleAppGitRepoUrl: "https://github.com/aws-samples/net-modernization.git"
 
-  #Create resources for Unicorn Workshop
+  # Create resources for Unicorn Workshop
   UnicornWorkshopStack:
       Type: AWS::CloudFormation::Stack
       Properties:
-        TemplateURL: "https://unicorn-store-dotnet.s3.us-east-2.amazonaws.com/Modernization-Resources-CFN.yml"
+        TemplateURL: "https://unishop-dotnet.s3.us-east-2.amazonaws.com/Modernization-Resources-CFN.yml"
         Parameters:
           VpcId: !GetAtt VPCResourceStack.Outputs.VpcId
           SubnetIdList: !GetAtt VPCResourceStack.Outputs.Subnets

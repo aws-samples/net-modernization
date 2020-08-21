@@ -1,0 +1,204 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Create the S3 buckets required for the CI/CD workflow.
+
+Metadata:
+  AWS::CloudFormation::Interface: 
+    ParameterGroups:
+      - Label:
+          default: S3 Bucket Info
+        Parameters:
+          - S3BucketName
+          - OtherRegion1
+          - OtherRegion2
+          - OtherRegion3
+          - OtherRegion4
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: Name of the S3 bucket where all CodeBuild artifacts are stored and where the Hugo Site is hosted
+    Default: unishop-store-dotnet
+  OtherRegion1:
+    Type: String
+    Default: us-west-2
+  OtherRegion2:
+    Type: String
+    Default: ap-southeast-1
+  OtherRegion3:
+    Type: String
+    Default: eu-west-1
+  OtherRegion4:
+    Type: String
+    Default: us-east-1
+
+
+Resources:
+# S3 Bucket used to host Hugo site as well as store zipped lambda package and EBS package
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DependsOn: TriggerLambda
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Ref 'S3BucketName'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+      PublicAccessBlockConfiguration:
+        IgnorePublicAcls: false
+        BlockPublicAcls: false
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  ### Resources necessary to perform cross-region replication ###
+  LambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action:
+              - "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+        Version: "2012-10-17"
+      Path: /
+      Policies:
+        -
+          PolicyDocument:
+            Statement:
+              -
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Effect: Allow
+                Resource: "arn:aws:logs:*:*:*"
+              -
+                Action:
+                  - "s3:*"
+                Effect: Allow
+                Resource: "*"
+            Version: "2012-10-17"
+          PolicyName: root
+    Type: "AWS::IAM::Role"
+
+
+  CrossRegionBucketMaker:
+    Properties:
+      Code:
+        ZipFile:
+          !Sub |
+            var aws = require('aws-sdk');
+            var response = require('cfn-response');
+            exports.handler = function(event, context, callback){
+                var s3One = new aws.S3({region: event.ResourceProperties.DestBucketRegion1});
+                var s3Two = new aws.S3({region: event.ResourceProperties.DestBucketRegion2});
+                var s3Three = new aws.S3({region: event.ResourceProperties.DestBucketRegion3});
+                var s3Four = new aws.S3({region: event.ResourceProperties.DestBucketRegion4});
+                if (event.RequestType == 'Create' || event.RequestType == 'Update'){
+                    var bucketOneParams = {
+                        Bucket: event.ResourceProperties.DestBucketName1,
+                    };
+                    var bucketTwoParams = {
+                        Bucket: event.ResourceProperties.DestBucketName2,
+                    };
+                    var bucketThreeParams = {
+                        Bucket: event.ResourceProperties.DestBucketName3,
+                    };
+                    var bucketFourParams = {
+                        Bucket: event.ResourceProperties.DestBucketName4,
+                    };
+                    var bucketMaker = function(bucket, bucketParams, destBucketResource, eventDestBucket){
+                      bucket.createBucket(bucketParams, function(err, data) {
+                        if (err){
+                            console.log(err, err.stack)
+                            response.send(event, context, response.FAILED, err)
+                        }
+                        else {
+                            console.log(data)
+                            var versioningParams = {
+                                Bucket: destBucketResource,
+                                VersioningConfiguration: {
+                                    Status: 'Enabled'
+                                }
+                            };
+                            s3One.putBucketVersioning(versioningParams, function(err, data) {
+                                if (err) {
+                                    console.log(err, err.stack);
+                                }
+                                else {
+                                    console.log(data)
+                                    response.send(event, context, response.SUCCESS, {}, eventDestBucket);
+                                    callback(null,'Bucket 1 created!');
+                                }
+                            });
+                        }
+                      });
+                    }
+                    bucketMaker(s3One, bucketOneParams, event.ResourceProperties.DestBucketName1, event.DestBucketName1);
+                    bucketMaker(s3Two, bucketTwoParams, event.ResourceProperties.DestBucketName2, event.DestBucketName2);
+                    bucketMaker(s3Three, bucketThreeParams, event.ResourceProperties.DestBucketName3, event.DestBucketName3);
+                    bucketMaker(s3Four, bucketFourParams, event.ResourceProperties.DestBucketName4, event.DestBucketName4);
+                }
+            };
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs12.x
+      Timeout: 30
+    Type: "AWS::Lambda::Function"
+  TriggerLambda:
+    Type: Custom::LambdaTrig
+    Properties:
+      ServiceToken: !GetAtt CrossRegionBucketMaker.Arn
+      DestBucketName1: 
+        !Join
+          - '-'
+          -
+            - !Ref 'S3BucketName'
+            - !Ref 'OtherRegion1'
+      DestBucketName2:
+        !Join
+          - '-'
+          -
+            - !Ref 'S3BucketName'
+            - !Ref 'OtherRegion2'
+      DestBucketName3:
+        !Join
+          - '-'
+          -
+            - !Ref 'S3BucketName'
+            - !Ref 'OtherRegion3'
+      DestBucketName4:
+        !Join
+          - '-'
+          -
+            - !Ref 'S3BucketName'
+            - !Ref 'OtherRegion4'
+      DestBucketRegion1: !Ref OtherRegion1
+      DestBucketRegion2: !Ref OtherRegion2
+      DestBucketRegion3: !Ref OtherRegion3
+      DestBucketRegion4: !Ref OtherRegion4
+  S3Role:
+    Properties:
+      RoleName: S3Role
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Action: "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              Service:
+                - s3.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        -  arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Path: /
+    Type: "AWS::IAM::Role"
+
+Outputs:
+  MainS3BucketName:
+    Description: "The S3 bucket used for storing CodePipeline artifacts in the region where the template is deployed."
+    Value: !Ref S3Bucket

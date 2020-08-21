@@ -6,16 +6,14 @@
         "All the command line options for the Lambda command can be specified in this file."
     ],
     "profile"     : "default",
-    "region"      : "us-east-2",
     "configuration" : "Release",
     "framework"     : "netcoreapp3.1",
     "function-runtime" : "dotnetcore3.1",
     "function-memory-size" : 256,
     "function-timeout"     : 30,
     "function-handler"     : "BasketLambda::BasketLambda.Function::FunctionHandler",
-    "function-name"        : "",
+    "function-name"        : "BasketLambda",
     "function-description" : "Lambda function to interact with the User Basket",
-    "function-role"        : "",
     "tracing-mode"         : "PassThrough",
     "environment-variables" : ""
 }
