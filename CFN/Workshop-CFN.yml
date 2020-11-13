@@ -59,6 +59,7 @@ Resources:
       TemplateURL: !Join ["/",[!Ref ResourceTemplateURL, "Windows-Dev-Env-EC2-CFN.yaml"]]
       Parameters:
         WorkshopNameTagValue: 'Developer Desktop'
+        WindowsInstanceType: t3.xlarge
         VpcId: !GetAtt VPCResourceStack.Outputs.VpcId
         SubnetId: !Select [0, !Split [',',!GetAtt VPCResourceStack.Outputs.Subnets]]
         StartDockerDaemonEC2: 'True'
